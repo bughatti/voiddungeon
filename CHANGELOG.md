@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## 0.1.1
+
+- **Many more dungeon quests on the Quests tab.** Some dungeon quests were missing because the quest database didn't tie them to their dungeon, for example *Going, Going, Guano!* for Razorfen Kraul. VoidDungeon now also uses Blizzard's own WoW Forever quest data, which files each dungeon quest under its dungeon. New: 4 for Razorfen Kraul, 26 for Blackrock Depths, 23 for Uldaman, 16 for Gnomeregan, 7 for the Sunken Temple, 5 for Zul'Farrak, the Dire Maul library and Gordok quests, and the quests of Forever's own dungeons (Ruins of Lordaeron, City of Dalaran, Excavation Site: Wetlands, The Drowned City).
+
 ## 0.1.0
 
 First version: the dungeon journal WoW Forever doesn't have, built into VoidMap.
