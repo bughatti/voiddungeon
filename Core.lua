@@ -124,6 +124,22 @@ function J:Shown(id, q)
     return classID == 12
 end
 
+-- A dungeon's bosses in Atlas order: { { name = , npc = }, ... }. VoidGear's Forever panel
+-- reads it with :Loot to list the dungeon upgrades for your level (2026-11-09).
+function J:Bosses(d)
+    local out, seen = {}, {}
+    for _, key in ipairs(d and d.maps or {}) do
+        local m = ns.Atlas and ns.Atlas[key]
+        for _, row in ipairs(m and m.rows or {}) do
+            if row[3] == "b" and row.npc and not seen[row.npc] then
+                seen[row.npc] = true
+                out[#out + 1] = { name = row[2], npc = row.npc }
+            end
+        end
+    end
+    return out
+end
+
 -- A boss's loot: { {id, pct}, ... } highest chance first.
 function J:Loot(npc)
     local flat = npc and ns.Loot and ns.Loot[npc]
