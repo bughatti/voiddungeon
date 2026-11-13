@@ -64,7 +64,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 ## Credits
 
 - **Dungeon maps** by the Atlas Team: Dan Gilbert, Lothaer, Arith Hsu and the Atlas Team ([Atlas](https://github.com/arithmandar/Atlas)), GPL-2.0-or-later.
-- **Drop chances and dungeon quests** from [NorgannonDB](https://github.com/zmarotrix/NorgannonDB) (GPL-3.0), built on Questie's database. Which quests belong to which dungeon also comes from Blizzard's own WoW Forever quest data.
+- **Drop chances, dungeon quests and entrances** from [NorgannonDB](https://github.com/zmarotrix/NorgannonDB) (GPL-3.0), built on Questie's database. Which quests belong to which dungeon also comes from Blizzard's own WoW Forever quest data.
 
 ---
 
