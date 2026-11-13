@@ -28,6 +28,19 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 - **Path** — the entrance, the bosses and the stops in order, with killed, "you're here" and next marked. Hover a line to see it on the map
 - **Tips** — short boss notes, when **VoidCheatSheet** is installed
 
+### Soft reserve (raids and dungeons)
+- **Stops loot grabbing:** before the run each player reserves the items they'll roll on, and only they press Need
+- **The leader opens it** on the **Reserve** tab (1, 2 or 3 per person). Everyone with VoidDungeon reserves from the **Loot** tab: right-click an item, **main spec** or **off spec**. Players without it whisper the leader `!sr [item]` (add `os` for off spec), and a **softres.it** list can be pasted in
+- **Fit check:** your own game checks the item when you reserve it (armor type, weapon skill, class), and the leader sees "can't use" next to a reserve that doesn't fit. Main spec reserves beat off spec ones
+- **When an item comes up:** you see "you reserved it: Need" or "reserved by A and B: Greed or pass". The leader's VoidDungeon names the reservers in group chat and calls out anyone else who presses Need (the leader can switch that off)
+- **Master loot:** if your group uses it, the master looter rolls an item among its reservers, main spec first, and hands it to the winner in one click
+- Reserves only, never gold: WoW Forever doesn't allow gold-bid raids
+
+### BoE from your runs
+- **Every bind-on-equip item** (green or better) you loot goes on the **BoE** tab's list
+- **Ask your guild** in one click: the items go to guild chat with links. Guildies with VoidDungeon also get a small box with a **Want** button per item, and a whisper with the item's link counts too
+- **Pick who gets each item**, then at any mailbox VoidDungeon fills one mail per person with their items: you just press Send
+
 ---
 
 ## Slash Commands
@@ -48,6 +61,8 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 ---
 
 ## Good to Know
+
+- Soft reserve needs the leader to have VoidDungeon; the rest of the group can use whispers or softres.it. When nobody who reserved an item is in the group, it's a free roll.
 
 - Maps cover the Classic dungeons and most of WoW Forever's new ones. The few without a map yet (The Drowned City, Krol'dok Stronghold, Alcaz Prison, Blackmaw Hold, The Shaper's Terrace) show their bosses and loot until they get one.
 - Drop chances are Classic's. WoW Forever's new items have no known chance yet.

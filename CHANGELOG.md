@@ -1,5 +1,17 @@
 # VoidDungeon Changelog
 
+## 0.3.0
+
+- **Soft reserve, for raids and dungeons.** The group leader opens it on the new **Reserve** tab (1, 2 or 3 items per person). Everyone reserves the items they'll roll on, and only they press Need.
+  - **How to reserve:** with VoidDungeon, right-click an item on the Loot tab and pick main spec or off spec. Without it, whisper the leader `!sr [item]`. The leader can also paste in a softres.it list (its Gargul or CSV export).
+  - **Fit check:** your own game checks whether you can use the item (armor type, weapon skill, class), and the leader sees "can't use" next to a reserve that doesn't fit.
+  - **When an item comes up for a roll:** you're told "Need" or "Greed or pass", and the leader's VoidDungeon names the reservers in group chat. It also calls out anyone else who presses Need.
+  - **With master loot:** the master looter rolls the item among its reservers (main spec beats off spec) and gives it to the winner in one click.
+  - Gold never comes into it.
+- **BoE from your runs.** Every bind-on-equip item (green or better) you loot goes on the new **BoE** tab.
+  - **Ask your guild:** one click posts the items in guild chat. Guildies with VoidDungeon get a Want button per item, and a whisper with the item's link counts too.
+  - **Hand them out:** pick who gets each item. At any mailbox, VoidDungeon fills one mail per person with their items; you press Send.
+
 ## 0.2.0
 
 - **Dungeon and raid entrances on the world map.** WoW Forever's map shows no entrances; now VoidMap's zone and continent maps have an icon at each one (cyan ring = dungeon, orange = raid), 36 in all, Forever's own included (Hall of Thanes, Ruins of Lordaeron, Excavation Site, City of Dalaran). Hover for the name, levels coloured for you and the group size; left-click opens its dungeon map (a shared door like Scarlet Monastery lets you pick the wing), right-click shows the way there. Not placed yet, as the data has no entrance for them: Alcaz Prison, Barrow Deeps, Blackmaw Hold, Krol'dok Stronghold, Mount Hyjal, Shaper's Terrace, The Drowned City.

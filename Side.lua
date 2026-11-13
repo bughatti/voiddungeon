@@ -4,6 +4,8 @@
 --   Loot    every boss's drops, or the selected boss's
 --   Path    entrance, bosses and stops in Atlas's order; hover = spot on the map
 --   Tips    VoidCheatSheet's notes (needs VoidCheatSheet)
+--   Reserve soft reserve for the group (Reserve.lua)
+--   BoE     BoE drops from your runs, handed out to the guild (Handout.lua)
 ----------------------------------------------------------------------
 local _, ns = ...
 local J = ns.J
@@ -12,7 +14,7 @@ local S = {}
 ns.Side = S
 
 local ROW_H = 18
-local TABS = { "Quests", "Loot", "Path", "Tips" }
+local TABS = { "Quests", "Loot", "Path", "Tips", "Reserve", "BoE" }
 local frame, list, head, more
 local tabBtns, rows, entries, offset = {}, {}, {}, 0
 
@@ -193,7 +195,7 @@ local function lootOf(out, r, skip)
         elseif J:Shown(it[1], q) then
             local c = ITEM_QUALITY_COLORS[q] or { r = 1, g = 1, b = 1 }
             out[#out + 1] = { text = name, r = c.r, g = c.g, b = c.b, icon = icon, item = it[1],
-                right = it[2] > 0 and (it[2] .. "%") or "|cff8c8c9e?|r" }
+                right = (ns.Reserve and ns.Reserve:Tag(it[1]) or "") .. (it[2] > 0 and (it[2] .. "%") or "|cff8c8c9e?|r") }
             any = true
         end
       end
@@ -308,7 +310,9 @@ local function tipEntries(out)
     if selName then out[#out + 1] = { text = "< all bosses", r = A[1], g = A[2], b = A[3], back = true } end
 end
 
-local BUILD = { Quests = questEntries, Loot = lootEntries, Path = pathEntries, Tips = tipEntries }
+local BUILD = { Quests = questEntries, Loot = lootEntries, Path = pathEntries, Tips = tipEntries,
+    Reserve = function(out) if ns.Reserve then ns.Reserve:Entries(out) end end,
+    BoE = function(out) if ns.Handout then ns.Handout:Entries(out) end end }
 
 ----------------------------------------------------------------------
 -- Rows
@@ -320,6 +324,14 @@ local function rowEnter(r)
     if e.item then
         GameTooltip:SetOwner(r, "ANCHOR_LEFT")
         GameTooltip:SetItemByID(e.item)
+        -- soft reserve: who has it, and how to reserve it (Reserve.lua)
+        local SR = ns.Reserve
+        if SR and SR:Session() and not e.menu then
+            local who, n = SR:WhoText(e.item)
+            GameTooltip:AddLine(" ")
+            if n > 0 then GameTooltip:AddLine("Reserved by: " .. who, 0.4, 1, 0.4, true) end
+            GameTooltip:AddLine("Right-click: reserve it (main spec or off spec)", 0.5, 0.8, 1)
+        end
         GameTooltip:Show()
     elseif e.quest then
         GameTooltip:SetOwner(r, "ANCHOR_LEFT")
@@ -344,7 +356,7 @@ local function rowEnter(r)
         GameTooltip:Show()
     elseif e.wrap and r.title:IsTruncated() then
         GameTooltip:SetOwner(r, "ANCHOR_LEFT")
-        GameTooltip:SetText(e.text, 1, 1, 1, 1, true)
+        GameTooltip:SetText(e.full or e.text, 1, 1, 1, 1, true)
         GameTooltip:Show()
     end
 end
@@ -362,6 +374,13 @@ local function rowClick(r, button)
         if link then DressUpItemLink(link) end
         return
     end
+    -- right-click: the row's own menu (BoE tab), else an item's reserve menu (Reserve.lua)
+    if button == "RightButton" then
+        if e.menu then e.menu(r)
+        elseif e.item and ns.Reserve then ns.Reserve:ItemMenu(r, e.item) end
+        return
+    end
+    if e.click then e.click(r); return end
     if e.back then J:Select(nil); return end
     if e.newRun then J:NewRun(); return end
     if e.missing then
@@ -388,7 +407,7 @@ local function row(i)
     r:SetHeight(ROW_H)
     r:SetPoint("TOPLEFT", 0, -(i - 1) * ROW_H)
     r:SetPoint("RIGHT", list, "RIGHT", 0, 0)
-    r:RegisterForClicks("LeftButtonUp")
+    r:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     local hl = r:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints()
     hl:SetColorTexture(A[1], A[2], A[3], 0.12)
@@ -416,6 +435,52 @@ function S:Refresh()
     for name, b in pairs(tabBtns) do b:SetSelected(name == t) end
     wipe(entries)
     BUILD[t](entries)
+    -- long text wraps onto more rows instead of being cut with "..." (the user, 2026-11-13: words
+    -- cut in half / cut off are a bug, not a style)
+    -- the title's room: 6 px left, 6 px right, 4 px before the right-hand text (Sol review)
+    local avail = (list:GetWidth() or 0) - 16
+    if avail > 60 then
+        if not S.meas then
+            S.meas = J.text(frame, 11)
+            S.meas:Hide()
+        end
+        local wrapped = {}
+        for _, e in ipairs(entries) do
+            if e.wrap and e.text and not e.icon then
+                local line, first = "", true
+                -- the first line shares its row with the right-hand text
+                local rightW = 0
+                if e.right and e.right ~= "" then
+                    S.meas:SetText(e.right)
+                    rightW = S.meas:GetStringWidth() + 4
+                end
+                local function flush()
+                    local x = {}
+                    for k, v in pairs(e) do x[k] = v end
+                    -- still wrap: a line that doesn't fit after all shows the whole text on hover
+                    x.text, x.full = line, e.text
+                    if not first then x.right = nil end
+                    wrapped[#wrapped + 1] = x
+                    first, line = false, ""
+                end
+                for word in e.text:gmatch("%S+") do
+                    local try = line == "" and word or (line .. " " .. word)
+                    S.meas:SetText(try)
+                    if line ~= "" and S.meas:GetStringWidth() > avail - (first and rightW or 0) then
+                        flush()
+                        line = word
+                    else
+                        line = try
+                    end
+                end
+                if line ~= "" then flush() end
+            else
+                wrapped[#wrapped + 1] = e
+            end
+        end
+        wipe(entries)
+        for i, e in ipairs(wrapped) do entries[i] = e end
+    end
     head:SetText(J.cur.name)
     local n = math.max(1, math.floor((list:GetHeight() or 0) / ROW_H))
     offset = math.max(0, math.min(offset, #entries - n))
