@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## 0.2.0
+
+- **Dungeon and raid entrances on the world map.** WoW Forever's map shows no entrances; now VoidMap's zone and continent maps have an icon at each one (cyan ring = dungeon, orange = raid), 36 in all, Forever's own included (Hall of Thanes, Ruins of Lordaeron, Excavation Site, City of Dalaran). Hover for the name, levels coloured for you and the group size; left-click opens its dungeon map (a shared door like Scarlet Monastery lets you pick the wing), right-click shows the way there. Not placed yet, as the data has no entrance for them: Alcaz Prison, Barrow Deeps, Blackmaw Hold, Krol'dok Stronghold, Mount Hyjal, Shaper's Terrace, The Drowned City.
+
 ## 0.1.2
 
 - Lets VoidGear's Forever panel list each dungeon's boss drops as upgrades for you.

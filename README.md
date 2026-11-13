@@ -1,4 +1,4 @@
-# VoidDungeon
+# VoidDungeon - Dungeon Journal, Maps & Loot
 
 **Works on:** WoW Forever
 
@@ -9,6 +9,11 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 ---
 
 ## Features
+
+### Entrances on the world map
+- **Every dungeon and raid entrance** on VoidMap's zone and continent maps (WoW Forever's map shows none): a cyan ring for dungeons, orange for raids. Doors shared by several, like Scarlet Monastery or Blackrock Mountain, show one icon with a count
+- **Hover** for the name, the level range coloured for your level, and 5-player or raid size
+- **Left-click** opens its dungeon map (pick the wing first when several share the door), **right-click** shows the way there with VoidGPS
 
 ### The dungeon's map
 - **Every boss numbered** — hover a number for the boss's best drops, click it for its loot and tips
@@ -63,4 +68,4 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 
 ---
 
-*Part of the Void addon family by Vede · GPL-3.0 licensed · [Source & bug reports](https://github.com/bughatti/voiddungeon) · [All Void addons](https://www.curseforge.com/members/bughatti/projects) · free M+ & raid player lookups at [voidscout.io](https://voidscout.io) · more at [tinkerline.io](https://tinkerline.io) · [Discord](https://discord.gg/7ZHmx7zMDh)*
+*Part of the Void addon family by Vede · GPL-3.0 licensed · [Source & bug reports](https://github.com/bughatti/voiddungeon) · [All Void addons](https://www.curseforge.com/members/bughatti/projects) · free M+ & raid player lookups at [voidscout.io](https://voidscout.io) · more at [tinkerline.io](https://tinkerline.io/addons/voiddungeon/) · [Discord](https://discord.gg/7ZHmx7zMDh)*
