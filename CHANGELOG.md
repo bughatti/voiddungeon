@@ -1,5 +1,15 @@
 # VoidDungeon Changelog
 
+## 0.4.0 — 2026-11-14
+
+- **New: mark the pack.** In dungeon and raid groups a marking board shows the mobs in front of you, one row each, with a button per marker (Skull, X and the crowd-control markers of the classes in your group).
+  - **A green check on the mobs that matter most**, from the dungeon's mob list: healers first, then mana burn, crowd control and summoners. The big green check at the top marks them all in one click. Hover a row to see which mob it probably is (the game hides mob names from addons inside dungeons).
+  - **In combat** the rows wait for the fight to end, but the marker bar at the bottom always works: target a mob, or hover it and press a key, to mark it. Keys for the big check and every marker: Key Bindings > AddOns > VoidDungeon.
+  - **Learn my picks** (off by default) turns the markers you choose into the checks for mobs that look the same; **Forget** clears them for the dungeon you're in.
+  - **A see-through slider** fades the board's background; the names and markers stay solid.
+  - `/vmark hide` and `/vmark show` turn the board off and on; it's also a switch in the Void hub.
+- **VoidDungeon is in the Void hub's drawer.**
+
 ## 0.3.1
 
 - **Quest rewards on the Quests tab.** Under each quest, in your log or not picked up yet: "Reward: ..." or "Pick one: Sword of Omen / Prophetic Cane / Dragon's Blood Necklace". With VoidQuest, which items are a choice comes from the game (your quest log, or a quest giver seen before); otherwise it says when that isn't known yet.

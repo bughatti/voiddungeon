@@ -1,0 +1,14 @@
+<Bindings>
+    <Binding name="CLICK VoidMarkApply:LeftButton" header="VOIDMARK" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkBar1:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkBar2:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkBar3:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkBar4:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkBar5:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkBar6:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkBar7:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkBar8:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkBar9:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkButton:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK VoidMarkHover:LeftButton" category="ADDONS"/>
+</Bindings>

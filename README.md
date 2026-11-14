@@ -41,6 +41,16 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 - **Ask your guild** in one click: the items go to guild chat with links. Guildies with VoidDungeon also get a small box with a **Want** button per item, and a whisper with the item's link counts too
 - **Pick who gets each item**, then at any mailbox VoidDungeon fills one mail per person with their items: you just press Send
 
+### Mark the pack
+- **A marking board** comes up in dungeon and raid groups: the mobs in front of you, one row each, with their name, level and elite tag, and a button per marker (Skull, X, and the crowd-control markers of the classes in your group)
+- **A green check** on the mobs that matter most, from the dungeon's mob list: healers first, then mana burn, crowd control and summoners. The big green check at the top marks them all in one click. Hover a row to see which mob it probably is
+- **Why "probably":** inside dungeons the game hides a mob's name from addons (it shows it to you), so VoidDungeon matches by dungeon, level, elite and mana or rage. Where two mobs look the same, the check only shows when most of them matter
+- **In combat** the rows wait for the fight to end (the game won't let an addon change what a button marks mid-fight). The bar at the bottom always works: target a mob and click a marker
+- **Keys** for the big check and for each marker on the mob under your mouse (these work in combat too): Key Bindings > AddOns > VoidDungeon
+- **Learn my picks** (off by default): the markers you pick become the checks for mobs that look the same. **Forget** clears them for the dungeon you're in
+- **See-through:** the slider at the bottom right fades the board's background (drag or mouse wheel); the names and markers stay solid
+- In a party anyone can mark; in a raid only the leader and assistants (the game's rule)
+
 ---
 
 ## Slash Commands
@@ -49,6 +59,8 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 |---|---|
 | `/vdungeon` | Open the dungeon you're in (or the last one you looked at) · also `/vdn` |
 | `/vdungeon <name>` | Open a dungeon by name, for example `/vdungeon wailing` |
+| `/vmark hide` · `/vmark show` | Turn the marking board off or back on |
+| `/vmark forget` | Forget every learned marker pick (all dungeons) |
 
 ---
 
@@ -80,6 +92,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 
 - **Dungeon maps** by the Atlas Team: Dan Gilbert, Lothaer, Arith Hsu and the Atlas Team ([Atlas](https://github.com/arithmandar/Atlas)), GPL-2.0-or-later.
 - **Drop chances, dungeon quests and entrances** from [NorgannonDB](https://github.com/zmarotrix/NorgannonDB) (GPL-3.0), built on Questie's database. Which quests belong to which dungeon also comes from Blizzard's own WoW Forever quest data.
+- **Which mobs matter for marking:** each mob's spells, level and class from the [CMaNGOS classic database](https://github.com/cmangos/classic-db) (GPL-3.0)
 
 ---
 
