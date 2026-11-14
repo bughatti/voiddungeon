@@ -48,10 +48,27 @@ local function startText(s)
     return (s[3] ~= "" and s[3] or "?") .. (mi and (", " .. mi.name) or "")
 end
 
+-- A dungeon's quest IDs. A map with no list of its own ("Scarlet Monastery", the overview of its
+-- wings) gets the lists of every "Name: wing" entry, each quest once.
+local function dungeonQuests(name)
+    if not (ns.DQ and name) then return {} end
+    if ns.DQ[name] then return ns.DQ[name] end
+    local ids, seen, prefix = {}, {}, name .. ":"
+    for key, list in pairs(ns.DQ) do
+        if key:sub(1, #prefix) == prefix then
+            for _, q in ipairs(list) do
+                if not seen[q] then seen[q] = true; ids[#ids + 1] = q end
+            end
+        end
+    end
+    table.sort(ids)
+    return ids
+end
+
 local function questEntries(out)
     local d = J.cur
     local want = d and d.name:lower()
-    local ids = (ns.DQ and d and ns.DQ[d.name]) or {}
+    local ids = dungeonQuests(d and d.name)
     local listed = {}
 
     -- 1) in your log: this dungeon's quests, plus whatever sits under its header in the log
@@ -70,6 +87,26 @@ local function questEntries(out)
             end
         end
     end
+    -- the quest's rewards under it (the user, 2026-11-13: Sword of Omen, an SM quest reward, wasn't
+    -- in VoidDungeon): "Reward: A, B" or "Pick one: A / B / C"
+    -- "pick one" only when known: VoidQuest reads the real split from your quest log or a quest giver
+    -- seen before; the data's NorgannonDB fills ("unsplit: A / B") don't say which are a choice
+    local function rewardRow(qid, dim)
+        local VF = VoidQuest and VoidQuest.Forever
+        local text = VF and VF.RewardText and VF:RewardText(qid)
+        if not text then
+            local q = ns.QI and ns.QI[qid]
+            local s = q and q[8]
+            if not s or s == "" then return end
+            local u = s:match("^unsplit:%s*(.*)$")
+            text = u and (u .. (u:find(" / ", 1, true) and " (not known yet which are a choice)" or " (and rewards not known yet)"))
+                or s:gsub("^choose:%s*", "pick one: "):gsub(";%s*choose:%s*", ", and pick one: ")
+        end
+        local pick = text:find("^pick one: ")
+        local k = dim and 0.55 or 1
+        out[#out + 1] = { text = "      " .. (pick and ("Pick one: " .. text:sub(11)) or ("Reward: " .. text)),
+            r = 0.55 * k, g = 0.8 * k, b = 1 * k, wrap = true }
+    end
     out[#out + 1] = { head = "In your log" }
     for _, info in ipairs(mine) do
         listed[info.questID] = true
@@ -82,6 +119,7 @@ local function questEntries(out)
                     g = o.finished and 0.8 or 0.75, b = o.finished and 0.4 or 0.8 }
             end
         end
+        rewardRow(info.questID)
     end
     if #mine == 0 then out[#out + 1] = { text = "   none", r = 0.5, g = 0.5, b = 0.55 } end
 
@@ -128,6 +166,7 @@ local function questEntries(out)
             right = mi and ("|cffffd200" .. mi.name .. "|r") or ""
         end
         out[#out + 1] = { text = ("[%d] %s"):format(q[2] or 0, q[1]), r = r, g = g, b = b, right = right, missing = e }
+        rewardRow(e.qid, dim)
     end
     if #ready + #later > 0 then
         out[#out + 1] = { head = "Not picked up yet" }

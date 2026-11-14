@@ -1,5 +1,10 @@
 # VoidDungeon Changelog
 
+## 0.3.1
+
+- **Quest rewards on the Quests tab.** Under each quest, in your log or not picked up yet: "Reward: ..." or "Pick one: Sword of Omen / Prophetic Cane / Dragon's Blood Necklace". With VoidQuest, which items are a choice comes from the game (your quest log, or a quest giver seen before); otherwise it says when that isn't known yet.
+- **Fixed: Scarlet Monastery said "No quests known".** The overview map of a dungeon with wings (Scarlet Monastery) now lists the quests of all its wings.
+
 ## 0.3.0
 
 - **Soft reserve, for raids and dungeons.** The group leader opens it on the new **Reserve** tab (1, 2 or 3 items per person). Everyone reserves the items they'll roll on, and only they press Need.

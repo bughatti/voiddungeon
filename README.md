@@ -23,7 +23,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 - **How far you got** — killed bosses get a tick and dim, the next boss is marked in gold, and the boss you're standing by lights up orange. Kept through a reload or a corpse run; a new dungeon starts a new run
 
 ### Tabs beside the map
-- **Quests** — your quests for this dungeon and how far along you are, then the dungeon's quests you haven't picked up yet, the ones you can take first. Click one and VoidGPS routes you to its quest giver (or the map gets a waypoint), or to the quest before it if there is one
+- **Quests** — your quests for this dungeon and how far along you are, then the dungeon's quests you haven't picked up yet, the ones you can take first. Each shows its rewards ("Pick one: ..." when you choose one). Click one and VoidGPS routes you to its quest giver (or the map gets a waypoint), or to the quest before it if there is one
 - **Loot** — every boss's drops with their drop chances. WoW Forever's new items, which any boss can drop, have a list of their own. **Shift-click** links an item, **Ctrl-click** tries it on
 - **Path** — the entrance, the bosses and the stops in order, with killed, "you're here" and next marked. Hover a line to see it on the map
 - **Tips** — short boss notes, when **VoidCheatSheet** is installed
