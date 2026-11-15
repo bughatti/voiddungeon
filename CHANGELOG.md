@@ -1,5 +1,11 @@
 # VoidDungeon Changelog
 
+## 0.4.3 — 2026-11-15
+
+- **Credits:** the game data this addon ships is now called **VoidDB**; full credits and licences of the open data in it are in NOTICE.txt and the README.
+
+- **Which boss drops an item**, for other addons (`VoidDungeon:DropsOf(item)`): VoidProf uses it to tell you where each camping recipe drops and to route you to the dungeon.
+
 ## 0.4.2 — 2026-11-15
 
 - **Plan your marks ahead of time: the new Marks tab.** Open a dungeon on the map and the Marks tab lists its mobs, grouped by what they do (healers, mana burners, crowd control, summoners, casters, the rest), each with its level and the spells worth knowing ("Scarlet Adept: Heal, Holy Smite"). Click a mob to give it a marker, or "leave it unmarked"; right-click (or "No mark of mine") takes yours off again, and "Clear all my marks here" starts the dungeon over. In the run, the marking board's green check puts your marks on those mobs, before any pick of its own. Inside a dungeon the game hides mob names, so the board recognizes a mob by its level, elite and mana or rage, or by what your earlier pulls proved it to be: two mobs that look alike need the same mark. Mobs your pulls named in WoW Forever's new dungeons show up on the tab too. Scarlet Monastery and Dire Maul are split by wing: each wing's page lists only the mobs that stand in that wing.

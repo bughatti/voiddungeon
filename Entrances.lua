@@ -2,7 +2,7 @@
 -- Entrances.lua — every dungeon and raid entrance on VoidMap's world map (WoW Forever has no
 -- entrance icons: its dungeon journal is empty, so Blizzard's own provider shows nothing).
 --
--- Data: Data/Entrances.lua (tools/cmd/vdungeon-entrances, from NorgannonDB). Shown on the zone
+-- Data: Data/Entrances.lua (tools/cmd/vdungeon-entrances, from VoidDB). Shown on the zone
 -- map of the entrance and on the maps above it (continent, the zone around a city), never on
 -- the Azeroth map. Instances sharing a door (Scarlet Monastery's wings, Blackrock Mountain)
 -- become one icon listing all of them.

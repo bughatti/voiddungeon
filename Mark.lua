@@ -754,6 +754,11 @@ local function knownAs(m)
         local v, n, own = net:Get(SW, tostring(m.inst), key)
         if v and not own then return v, n, n, true end
     end
+    -- what fights proved before this version came out (Data/MarkProven.lua, tools/cmd/vmark-proven:
+    -- the author's pulls, and answers 2+ players' fights agreed on), checked like a shared answer
+    local p = key and m.inst and VM.Proven and VM.Proven[m.inst]
+    local v = p and p[key]
+    if type(v) == "string" and swValid(tostring(m.inst), key, v) then return v, nil, nil, "shipped" end
 end
 
 -- your own proven looks -> the swarm (all of them: at login, and after each pull)
@@ -967,7 +972,10 @@ for i = 1, ROWS do
         if not m then return end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         local _, sharedN, _, shared = knownAs(m)
-        if m.known and shared then
+        if m.known and shared == "shipped" then
+            GameTooltip:AddLine(("Seen in Void players' fights here: %s"):format(m.known), 1, 1, 1, true)
+            GameTooltip:AddLine("Comes with VoidDungeon; your own fights here will replace it.", 0.6, 0.6, 0.6, true)
+        elseif m.known and shared then
             GameTooltip:AddLine(("Seen in other players' fights here: %s (%d players)"):format(m.known, sharedN or 0), 1, 1, 1, true)
             GameTooltip:AddLine("Shared over the Void network once 3 players' fights agreed; your own fights here will replace it.", 0.6, 0.6, 0.6, true)
         elseif m.known then

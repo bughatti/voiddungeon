@@ -92,7 +92,7 @@ local function questEntries(out)
     -- the quest's rewards under it (the user, 2026-11-13: Sword of Omen, an SM quest reward, wasn't
     -- in VoidDungeon): "Reward: A, B" or "Pick one: A / B / C"
     -- "pick one" only when known: VoidQuest reads the real split from your quest log or a quest giver
-    -- seen before; the data's NorgannonDB fills ("unsplit: A / B") don't say which are a choice
+    -- seen before; the data's VoidDB fills ("unsplit: A / B") don't say which are a choice
     local function rewardRow(qid, dim)
         local VF = VoidQuest and VoidQuest.Forever
         local text = VF and VF.RewardText and VF:RewardText(qid)

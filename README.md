@@ -106,7 +106,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 ## Credits
 
 - **Dungeon maps** by the Atlas Team: Dan Gilbert, Lothaer, Arith Hsu and the Atlas Team ([Atlas](https://github.com/arithmandar/Atlas)), GPL-2.0-or-later.
-- **Drop chances, dungeon quests and entrances** from [NorgannonDB](https://github.com/zmarotrix/NorgannonDB) (GPL-3.0), built on Questie's database. Which quests belong to which dungeon also comes from Blizzard's own WoW Forever quest data.
+- **Drop chances, dungeon quests and entrances** from VoidDB. Which quests belong to which dungeon also comes from Blizzard's own WoW Forever quest data. **VoidDB**, the game data the Void addons ship, is built from Blizzard's game data, finds shared by Void players, and open data: NorgannonDB by Maro, QuestieDB, pfQuest by Shagu, DungeonJournal by Exehn and CMaNGOS classic-db (GPL-3.0; pfQuest MIT). Full credits and licences: NOTICE.txt in the addon folder. Thank you to all of them.
 - **Which mobs matter for marking:** each mob's spells, level and class from the [CMaNGOS classic database](https://github.com/cmangos/classic-db) (GPL-3.0)
 
 ---
