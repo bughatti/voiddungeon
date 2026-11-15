@@ -154,6 +154,13 @@ end
 -- -> { { boss, npc, dungeon (name), lv ("15-24"), min, pct (0 = not known yet), at = { {uiMap, x, y}, ... } }, ... },
 -- lowest dungeon first; at = its entrances (0..1). Empty when no boss in the data drops it.
 local dropIndex
+-- a dungeon's entrances by its name ("Sunken Temple"): { {uiMap, x, y}, ... } or nil
+function J:EntranceOf(name)
+    for _, e in ipairs(ns.Entrances or {}) do
+        if e.dungeon == name or e.name == name then return e.at end
+    end
+end
+
 function J:DropsOf(item)
     if not dropIndex then
         dropIndex = {}

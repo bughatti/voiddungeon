@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## 0.4.4 — 2026-11-15
+
+- **Where camp blueprints really drop:** when a "Blueprint: ..." item drops in a dungeon, VoidDungeon notes the dungeon and the boss (the one whose fight you just finished) and tells other Void players. Once 2 players have seen the same, VoidProf's Camping tab shows it as the source. Off with "Share fight results".
+
 ## 0.4.3 — 2026-11-15
 
 - **Credits:** the game data this addon ships is now called **VoidDB**; full credits and licences of the open data in it are in NOTICE.txt and the README.

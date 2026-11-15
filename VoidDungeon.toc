@@ -2,7 +2,7 @@
 ## Title: |cff00c7ffVoidDungeon|r
 ## Notes: The dungeon journal WoW Forever doesn't have, inside VoidMap: dungeon maps, your quests, boss loot with drop chances, the path and boss tips
 ## Author: Vede
-## Version: 0.4.3
+## Version: 0.4.4
 ## Dependencies: VoidMap
 ## OptionalDeps: VoidCheatSheet
 ## SavedVariables: VoidDungeonDB, VoidMarkDB
@@ -21,6 +21,7 @@ Data\MarkSpells.lua
 Data\MarkSeed.lua
 Data\MarkProven.lua
 Core.lua
+Blueprints.lua
 Canvas.lua
 Chain.lua
 Side.lua
