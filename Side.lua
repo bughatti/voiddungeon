@@ -4,6 +4,7 @@
 --   Loot    every boss's drops, or the selected boss's
 --   Path    entrance, bosses and stops in Atlas's order; hover = spot on the map
 --   Tips    VoidCheatSheet's notes (needs VoidCheatSheet)
+--   Marks   your own markers per mob, used by the marking board in the run (Mark.lua)
 --   Reserve soft reserve for the group (Reserve.lua)
 --   BoE     BoE drops from your runs, handed out to the guild (Handout.lua)
 ----------------------------------------------------------------------
@@ -14,9 +15,10 @@ local S = {}
 ns.Side = S
 
 local ROW_H = 18
-local TABS = { "Quests", "Loot", "Path", "Tips", "Reserve", "BoE" }
+local TABS = { "Quests", "Loot", "Path", "Tips", "Marks", "Reserve", "BoE" }
 local frame, list, head, more
 local tabBtns, rows, entries, offset = {}, {}, {}, 0
+S.open = {}   -- Quests tab: dungeon quests whose chain is unfolded (this session)
 
 local function tab() return (VoidDungeonDB and VoidDungeonDB.tab) or "Path" end
 
@@ -128,15 +130,16 @@ local function questEntries(out)
     local class = select(3, UnitClass("player"))
     local level = UnitLevel("player")
     local ready, later = {}, {}
+    local env = ns.Chain and ns.Chain.GameEnv()
     for _, qid in ipairs(ids) do
         local q = ns.QI and ns.QI[qid]
         if q and not listed[qid] and not done(qid) and not inLog(qid) and hasBit(q[4], race) and hasBit(q[5], class) then
             local e = { qid = qid, q = q }
-            for _, p in ipairs(q[7] or {}) do
-                if done(p) then e.needPre = nil; break end
-                e.needPre = e.needPre or p
-            end
-            if e.needPre then
+            -- the whole way in (Chain.lua): every quest before this one, with where you stand on each
+            e.steps = ns.Chain and ns.Chain:Steps(qid, env) or {}
+            e.left = ns.Chain and ns.Chain:Left(e.steps) or 0
+            e.start = ns.Chain and ns.Chain:Start(e.steps)
+            if e.left > 0 then
                 later[#later + 1] = e
             elseif (q[3] or 0) > level then
                 e.needLevel = q[3]
@@ -155,8 +158,8 @@ local function questEntries(out)
         local r, g, b = questColor(q[2])
         if dim then r, g, b = r * 0.55, g * 0.55, b * 0.55 end
         local right
-        if e.needPre then
-            right = "|cff8c8c9eafter a quest|r"
+        if e.left > 0 then
+            right = ("|cff8c8c9e%d quest%s first|r"):format(e.left, e.left == 1 and "" or "s")
         elseif e.needLevel then
             right = "|cff8c8c9eat " .. e.needLevel .. "|r"
         elseif s and s[1] == "i" then
@@ -165,14 +168,46 @@ local function questEntries(out)
             local mi = s and s[4] and s[4] > 0 and C_Map.GetMapInfo(s[4])
             right = mi and ("|cffffd200" .. mi.name .. "|r") or ""
         end
-        out[#out + 1] = { text = ("[%d] %s"):format(q[2] or 0, q[1]), r = r, g = g, b = b, right = right, missing = e }
+        local open = e.left > 0 and S.open[e.qid]
+        out[#out + 1] = { text = ("%s[%d] %s"):format(e.left > 0 and (open and "|cff4fd8ff- |r" or "|cff4fd8ff+ |r") or "", q[2] or 0, q[1]),
+            r = r, g = g, b = b, right = right, missing = e, wrap = true }
         rewardRow(e.qid, dim)
+        if open then
+            -- the way in, oldest first: where you stand on each step, and where to start now
+            for i, s in ipairs(e.steps) do
+                local sq = s.q
+                local title = sq and sq[1] or ("quest " .. s.qid)
+                local here = s == e.start
+                local sr, sg, sb = 0.75, 0.75, 0.8
+                local sright
+                if s.state == "done" then
+                    sr, sg, sb, sright = 0.4, 0.62, 0.4, "|cff66aa66done|r"
+                elseif s.state == "log" then
+                    sr, sg, sb, sright = 1, 0.82, 0, "|cffffd200in your log|r"
+                elseif s.state == "ready" then
+                    sr, sg, sb = questColor(sq[2])
+                    local st = sq[6]
+                    local mi = st and st[1] ~= "i" and st[4] and st[4] > 0 and C_Map.GetMapInfo(st[4])
+                    sright = st and st[1] == "i" and "|cffffd200an item|r" or (mi and ("|cffffd200" .. mi.name .. "|r")) or ""
+                elseif s.state == "level" then
+                    sright = "|cff8c8c9eat " .. tostring(s.n) .. "|r"
+                elseif s.state == "after" then
+                    sr, sg, sb, sright = 0.55, 0.55, 0.6, ""
+                else
+                    sr, sg, sb, sright = 0.55, 0.55, 0.6, "|cff8c8c9eunknown|r"
+                end
+                out[#out + 1] = { text = ("    %s%d. %s%s"):format(here and "|cff55ff55>|r " or "", i,
+                    sq and ("[" .. (sq[2] or 0) .. "] ") or "", title), r = sr, g = sg, b = sb, right = sright, step = s, wrap = true }
+            end
+            out[#out + 1] = { text = ("    %d. %s"):format(#e.steps + 1, q[1]), r = 0.55, g = 0.55, b = 0.6,
+                right = "|cff8c8c9ethis one|r" }
+        end
     end
     if #ready + #later > 0 then
         out[#out + 1] = { head = "Not picked up yet" }
         for _, e in ipairs(ready) do add(e, false) end
         for _, e in ipairs(later) do add(e, true) end
-        out[#out + 1] = { text = "Click one: route to where it starts.", r = 0.45, g = 0.45, b = 0.5 }
+        out[#out + 1] = { text = "Click one: the way there. With quests before it (+): the whole chain, where you stand on each, and where to start.", r = 0.45, g = 0.45, b = 0.5, wrap = true }
     elseif #ids == 0 then
         out[#out + 1] = { head = "Not picked up yet" }
         out[#out + 1] = { text = "No quests known for " .. (d and d.name or "this dungeon") .. " yet.", r = 0.5, g = 0.5, b = 0.55, wrap = true }
@@ -349,7 +384,161 @@ local function tipEntries(out)
     if selName then out[#out + 1] = { text = "< all bosses", r = A[1], g = A[2], b = A[3], back = true } end
 end
 
-local BUILD = { Quests = questEntries, Loot = lootEntries, Path = pathEntries, Tips = tipEntries,
+----------------------------------------------------------------------
+-- Marks: plan the markers ahead of time (the user, 2026-11-14: "a section somewhere for someone
+-- to go through and mark them ... so when i run it, it comes up that way and i can just hit the
+-- green checkmark"). The dungeon's mobs (the dungeon list, plus mobs your pulls named in a dungeon
+-- the list doesn't have), grouped by what they do, with their spells; click one to pick its
+-- marker. In the run the marking board's green check puts your marks on them (Mark.lua planOf).
+----------------------------------------------------------------------
+-- this map's dungeon -> the game's instance map id (the dungeon list's key); wings share their
+-- dungeon's id. WoW Forever's new dungeons: learned when you're inside (VoidMarkDB.instIds).
+local INST = { ["shadowfang keep"] = 33, ["stormwind stockades"] = 34, ["the stockade"] = 34,
+    ["the deadmines"] = 36, ["wailing caverns"] = 43, ["razorfen kraul"] = 47, ["blackfathom deeps"] = 48,
+    ["uldaman"] = 70, ["gnomeregan"] = 90, ["sunken temple"] = 109, ["the temple of atal'hakkar"] = 109,
+    ["razorfen downs"] = 129, ["scarlet monastery"] = 189, ["zul'farrak"] = 209, ["blackrock spire"] = 229,
+    ["lower blackrock spire"] = 229, ["upper blackrock spire"] = 229, ["blackrock depths"] = 230,
+    ["onyxia's lair"] = 249, ["scholomance"] = 289, ["zul'gurub"] = 309, ["stratholme"] = 329,
+    ["maraudon"] = 349, ["ragefire chasm"] = 389, ["molten core"] = 409, ["the molten core"] = 409,
+    ["dire maul"] = 429, ["blackwing lair"] = 469, ["ruins of ahn'qiraj"] = 509, ["ahn'qiraj"] = 531,
+    ["naxxramas"] = 533 }
+local function instOf(name)
+    if type(name) ~= "string" then return nil end
+    local n = name:lower()
+    local base = n:gsub(":.*$", ""):gsub("%s*%(.*%)$", "")
+    local learnedIds = VoidMarkDB and VoidMarkDB.instIds or {}
+    return INST[n] or INST[base] or learnedIds[n] or learnedIds[base]
+end
+S.InstOf = instOf
+
+local MARK_NAMES = { "Star", "Circle", "Diamond", "Triangle", "Moon", "Square", "Cross", "Skull" }
+local function markIcon(i, size)
+    return ("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_%d:%d|t"):format(i, size or 0)
+end
+local ROLE_ORDER = { "healer", "mana burn", "crowd control", "summoner", "dispeller", "caster", "" }
+local ROLE_HEAD = { healer = "Healers", ["mana burn"] = "Mana burners", ["crowd control"] = "Crowd control",
+    summoner = "Summoners", dispeller = "Dispellers", caster = "Casters", [""] = "The rest" }
+
+-- the wing this map page shows ("Scarlet Monastery: Armory" -> Armory, "Dire Maul (East)" -> East); nil = all
+local function wingOf(name)
+    if type(name) ~= "string" then return nil end
+    local w = name:match(": (.+)$") or name:match("%((.-)%)$")
+    if not w or w == "Entrance" then return nil end
+    return w
+end
+S.WingOf = wingOf
+
+-- the dungeon's mobs: { name, lo, hi, elite, pt, role, spells, learned }; on a wing's page only that
+-- wing's (the list knows the wings of Scarlet Monastery and Dire Maul)
+local function dungeonMobs(inst, wing)
+    local out, have = {}, {}
+    local VM = VoidMark
+    for _, e in ipairs(VM and VM.Seed and VM.Seed[inst] or {}) do
+        local inWing = not wing or not e[10] or e[10] == "" or ("," .. e[10] .. ","):find("," .. wing .. ",", 1, true)
+        if inWing and not have[e[8]] then
+            have[e[8]] = true
+            out[#out + 1] = { name = e[8], lo = e[1], hi = e[2], elite = e[3] == 1, pt = e[4], role = e[7] or "", spells = e[9] }
+        end
+    end
+    -- mobs your pulls named here that the list doesn't have (WoW Forever's new dungeons)
+    local tag = ":" .. inst .. "|"
+    for key, names in pairs(VoidMarkDB and VoidMarkDB.seen or {}) do
+        if key:find(tag, 1, true) then
+            local elite, pt, lvl = key:match("|(%d)|(%d+)|(%-?%d+)$")
+            for nm, c in pairs(names) do
+                if nm ~= "t" and type(c) == "number" and not have[nm] then
+                    have[nm] = true
+                    out[#out + 1] = { name = nm, lo = tonumber(lvl), hi = tonumber(lvl), elite = elite == "1",
+                        pt = tonumber(pt), role = tonumber(pt) == 0 and "caster" or "", learned = true }
+                end
+            end
+        end
+    end
+    table.sort(out, function(a, b) return a.name < b.name end)
+    return out
+end
+
+local function setMark(inst, name, mk)
+    if VoidMark and VoidMark.PlanSet then VoidMark.PlanSet(inst, name, mk) end
+    S:Refresh()
+end
+
+local function markMenu(r, mm)
+    if not (MenuUtil and MenuUtil.CreateContextMenu) then return end
+    MenuUtil.CreateContextMenu(r, function(_, root)
+        root:CreateTitle(mm.name)
+        for i = 8, 1, -1 do
+            root:CreateButton(markIcon(i, 14) .. " " .. MARK_NAMES[i], function() setMark(mm.inst, mm.name, i) end)
+        end
+        root:CreateButton("Leave it unmarked", function() setMark(mm.inst, mm.name, 0) end)
+        root:CreateButton("No mark of mine (the board decides)", function() setMark(mm.inst, mm.name, nil) end)
+    end)
+end
+
+local function marksEntries(out)
+    local d = J.cur
+    local inst = d and instOf(d.name)
+    out[#out + 1] = { text = "Mark the mobs you know: in the run, the marking board's green check puts your marks on them, before its own picks.",
+        r = 0.6, g = 0.6, b = 0.66, wrap = true }
+    if not inst then
+        out[#out + 1] = { text = "No mob list for this one yet: run it once and the mobs you fight show up here.", r = 0.5, g = 0.5, b = 0.55, wrap = true }
+        return
+    end
+    local mobs = dungeonMobs(inst, wingOf(d.name))
+    if #mobs == 0 then
+        out[#out + 1] = { text = "No mobs known here yet: run it once and the mobs you fight show up here.", r = 0.5, g = 0.5, b = 0.55, wrap = true }
+        return
+    end
+    local VM = VoidMark
+    local marked = 0
+    local shown = {}   -- the mobs on this page: "Clear all" clears only these (a wing's page leaves the other wings alone)
+    for _, m in ipairs(mobs) do shown[#shown + 1] = m.name end
+    for _, role in ipairs(ROLE_ORDER) do
+        local group = {}
+        for _, m in ipairs(mobs) do if (m.role or "") == role then group[#group + 1] = m end end
+        if #group > 0 then
+            out[#out + 1] = { head = ROLE_HEAD[role] }
+            for _, m in ipairs(group) do
+                local mk = VM and VM.PlanGet and VM.PlanGet(inst, m.name)
+                if mk then marked = marked + 1 end
+                local mm = { inst = inst, name = m.name, mob = m }
+                local lv = m.lo and (m.lo == m.hi and tostring(m.lo) or (m.lo .. "-" .. m.hi)) or "?"
+                local mark = (mk and mk > 0) and (markIcon(mk) .. " ") or (mk == 0 and "|cff8c8c9e-|r " or "   ")
+                out[#out + 1] = { text = mark .. m.name, r = mk and 1 or 0.85, g = mk and 1 or 0.85, b = mk and 1 or 0.85,
+                    right = "|cff8c8c9e" .. lv .. (m.elite and " elite" or "") .. "|r", markMob = mm, wrap = true,
+                    click = function(row) markMenu(row, mm) end,
+                    menu = function() setMark(inst, m.name, nil) end }
+                if m.spells and m.spells ~= "" then
+                    out[#out + 1] = { text = "      " .. m.spells, r = 0.5, g = 0.5, b = 0.56, markMob = mm, wrap = true,
+                        click = function(row) markMenu(row, mm) end, menu = function() setMark(inst, m.name, nil) end }
+                end
+            end
+        end
+    end
+    out[#out + 1] = { text = ("%d of %d marked. Click a mob: pick its marker. Right-click: clear."):format(marked, #mobs),
+        r = 0.45, g = 0.45, b = 0.5, wrap = true }
+    -- start over: every mark of yours for this dungeon, after a yes (the user, 2026-11-14: "what if
+    -- they need to reset it cause they marked something wrong")
+    if marked > 0 then
+        local dname = d.name
+        out[#out + 1] = { text = "Clear all my marks here", r = 1, g = 0.45, b = 0.45,
+            click = function()
+                StaticPopupDialogs.VOIDDUNGEON_CLEAR_MARKS = StaticPopupDialogs.VOIDDUNGEON_CLEAR_MARKS or {
+                    text = "Clear all your marks for %s? The marking board goes back to its own picks there.",
+                    button1 = YES, button2 = NO, timeout = 0, whileDead = true, hideOnEscape = true,
+                    OnAccept = function(_, data)
+                        if type(data) == "table" and VoidMark and VoidMark.PlanSet then
+                            for _, nm in ipairs(data.names) do VoidMark.PlanSet(data.inst, nm, nil) end
+                        end
+                        S:Refresh()
+                    end,
+                }
+                StaticPopup_Show("VOIDDUNGEON_CLEAR_MARKS", dname, nil, { inst = inst, names = shown })
+            end }
+    end
+end
+
+local BUILD = { Quests = questEntries, Loot = lootEntries, Path = pathEntries, Tips = tipEntries, Marks = marksEntries,
     Reserve = function(out) if ns.Reserve then ns.Reserve:Entries(out) end end,
     BoE = function(out) if ns.Handout then ns.Handout:Entries(out) end end }
 
@@ -384,14 +573,56 @@ local function rowEnter(r)
         GameTooltip:AddLine(("Level %d (you can take it at %d)"):format(q[2] or 0, q[3] or 0), 0.8, 0.8, 0.8)
         local st = startText(q[6])
         if st then GameTooltip:AddLine("Starts: " .. st, 1, 1, 1, true) end
-        if m.needPre then
-            local p = ns.QI and ns.QI[m.needPre]
-            GameTooltip:AddLine("First: " .. (p and p[1] or ("quest " .. m.needPre)), 1, 0.5, 0.5, true)
-            local ps = p and startText(p[6])
-            if ps then GameTooltip:AddLine("   which starts: " .. ps, 0.8, 0.6, 0.6, true) end
+        if (m.left or 0) > 0 then
+            local doneN = #m.steps - m.left
+            GameTooltip:AddLine(("%d quest%s before this one%s"):format(m.left, m.left == 1 and "" or "s",
+                doneN > 0 and (" (%d more already done)"):format(doneN) or ""), 1, 0.5, 0.5, true)
+            local s = m.start
+            if s and s.state == "log" then
+                GameTooltip:AddLine("Start: " .. s.q[1] .. ", in your quest log", 0.4, 1, 0.4, true)
+            elseif s then
+                local ps = startText(s.q[6])
+                GameTooltip:AddLine("Start: " .. s.q[1] .. (ps and (", from " .. ps) or ""), 0.4, 1, 0.4, true)
+            else
+                GameTooltip:AddLine("Nothing in it you can take yet (a level or a quest elsewhere first).", 0.8, 0.6, 0.6, true)
+            end
+            GameTooltip:AddLine("Click: show the whole chain", 0.5, 0.8, 1)
+        else
+            if m.needLevel then GameTooltip:AddLine("Needs level " .. m.needLevel, 1, 0.5, 0.5) end
+            if q[6] and q[6][1] ~= "i" then GameTooltip:AddLine("Click: the way there", 0.5, 0.8, 1) end
         end
-        if m.needLevel then GameTooltip:AddLine("Needs level " .. m.needLevel, 1, 0.5, 0.5) end
-        if q[6] and q[6][1] ~= "i" then GameTooltip:AddLine("Click: route there", 0.5, 0.8, 1) end
+        GameTooltip:Show()
+    elseif e.step then
+        local s, sq = e.step, e.step.q
+        GameTooltip:SetOwner(r, "ANCHOR_LEFT")
+        GameTooltip:SetText(sq and sq[1] or ("quest " .. s.qid), 1, 0.82, 0)
+        if sq then GameTooltip:AddLine(("Level %d (you can take it at %d)"):format(sq[2] or 0, sq[3] or 0), 0.8, 0.8, 0.8) end
+        local st = sq and startText(sq[6])
+        if st then GameTooltip:AddLine("Starts: " .. st, 1, 1, 1, true) end
+        local why = ({ done = "Done.", log = "In your quest log.", ready = "You can take it now.",
+            after = "Comes after the step above it.", nodata = "Not in the quest data: ask in game.",
+        })[s.state] or (s.state == "level" and ("You can take it at level " .. tostring(s.n) .. "."))
+        if why then GameTooltip:AddLine(why, 0.7, 0.9, 0.7) end
+        if s.state == "log" then GameTooltip:AddLine("Click: track it", 0.5, 0.8, 1)
+        elseif s.state ~= "done" and sq and sq[6] and sq[6][1] ~= "i" then GameTooltip:AddLine("Click: the way there", 0.5, 0.8, 1) end
+        GameTooltip:Show()
+    elseif e.markMob then
+        local mm, m = e.markMob, e.markMob.mob
+        GameTooltip:SetOwner(r, "ANCHOR_LEFT")
+        GameTooltip:SetText(mm.name, 1, 0.82, 0)
+        local lv = m.lo and (m.lo == m.hi and tostring(m.lo) or (m.lo .. "-" .. m.hi)) or "?"
+        GameTooltip:AddLine(("Level %s%s, %s"):format(lv, m.elite and " elite" or "",
+            m.pt == 0 and "uses mana" or m.pt == 3 and "uses energy" or "uses rage"), 0.8, 0.8, 0.8)
+        if m.role and m.role ~= "" then GameTooltip:AddLine("What it does: " .. m.role, 1, 1, 1) end
+        if m.spells and m.spells ~= "" then GameTooltip:AddLine("Spells: " .. m.spells, 1, 1, 1, true) end
+        if m.learned then GameTooltip:AddLine("Named by your own pulls here (not in the dungeon list).", 0.6, 0.6, 0.6, true) end
+        local mk = VoidMark and VoidMark.PlanGet and VoidMark.PlanGet(mm.inst, mm.name)
+        GameTooltip:AddLine(" ")
+        if mk and mk > 0 then GameTooltip:AddLine("Your mark: " .. markIcon(mk, 14) .. " " .. MARK_NAMES[mk], 0.2, 1, 0.2)
+        elseif mk == 0 then GameTooltip:AddLine("Your mark: leave it unmarked", 0.2, 1, 0.2)
+        else GameTooltip:AddLine("No mark of yours: the board decides.", 0.6, 0.6, 0.6) end
+        GameTooltip:AddLine("Inside, the game hides mob names: the board knows this one by its level, elite and mana or rage, so two mobs that look alike need the same mark.", 0.55, 0.55, 0.6, true)
+        GameTooltip:AddLine("Click: pick a marker. Right-click: clear.", 0.5, 0.8, 1)
         GameTooltip:Show()
     elseif e.wrap and r.title:IsTruncated() then
         GameTooltip:SetOwner(r, "ANCHOR_LEFT")
@@ -423,12 +654,24 @@ local function rowClick(r, button)
     if e.back then J:Select(nil); return end
     if e.newRun then J:NewRun(); return end
     if e.missing then
-        -- a quest that must come first: route to that one instead
+        -- quests before it: open / close its chain; none: the way to its giver
         local m = e.missing
-        if m.needPre and ns.QI and ns.QI[m.needPre] then
-            routeTo({ q = ns.QI[m.needPre] })
+        if (m.left or 0) > 0 then
+            S.open[m.qid] = not S.open[m.qid] or nil
+            S:Refresh()
         else
             routeTo(m)
+        end
+        return
+    end
+    if e.step then
+        -- a step of a chain: track it when it's in your log, else the way to its giver
+        local s = e.step
+        if s.state == "log" then
+            if C_SuperTrack and C_SuperTrack.SetSuperTrackedQuestID then C_SuperTrack.SetSuperTrackedQuestID(s.qid) end
+            J:Print("tracking " .. (s.q and s.q[1] or ("quest " .. s.qid)) .. ".")
+        elseif s.state ~= "done" and s.q then
+            routeTo({ q = s.q })
         end
         return
     end
@@ -477,7 +720,8 @@ function S:Refresh()
     -- long text wraps onto more rows instead of being cut with "..." (the user, 2026-11-13: words
     -- cut in half / cut off are a bug, not a style)
     -- the title's room: 6 px left, 6 px right, 4 px before the right-hand text (Sol review)
-    local avail = (list:GetWidth() or 0) - 16
+    -- 22, not 16: the game draws a line a few pixels wider than the measure (live 11-14: "before..." cut)
+    local avail = (list:GetWidth() or 0) - 22
     if avail > 60 then
         if not S.meas then
             S.meas = J.text(frame, 11)
@@ -486,6 +730,8 @@ function S:Refresh()
         local wrapped = {}
         for _, e in ipairs(entries) do
             if e.wrap and e.text and not e.icon then
+                -- the indent (chain steps, rewards) stays on every line: splitting into words dropped it
+                local lead = e.text:match("^(%s*)") or ""
                 local line, first = "", true
                 -- the first line shares its row with the right-hand text
                 local rightW = 0
@@ -503,11 +749,11 @@ function S:Refresh()
                     first, line = false, ""
                 end
                 for word in e.text:gmatch("%S+") do
-                    local try = line == "" and word or (line .. " " .. word)
+                    local try = line == "" and (lead .. word) or (line .. " " .. word)
                     S.meas:SetText(try)
                     if line ~= "" and S.meas:GetStringWidth() > avail - (first and rightW or 0) then
                         flush()
-                        line = word
+                        line = lead .. word
                     else
                         line = try
                     end

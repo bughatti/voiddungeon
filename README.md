@@ -23,10 +23,12 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 - **How far you got** — killed bosses get a tick and dim, the next boss is marked in gold, and the boss you're standing by lights up orange. Kept through a reload or a corpse run; a new dungeon starts a new run
 
 ### Tabs beside the map
-- **Quests** — your quests for this dungeon and how far along you are, then the dungeon's quests you haven't picked up yet, the ones you can take first. Each shows its rewards ("Pick one: ..." when you choose one). Click one and VoidGPS routes you to its quest giver (or the map gets a waypoint), or to the quest before it if there is one
+- **Quests** — your quests for this dungeon and how far along you are, then the dungeon's quests you haven't picked up yet, the ones you can take first. Each shows its rewards ("Pick one: ..." when you choose one). Click one and VoidGPS routes you to its quest giver (or the map gets a waypoint).
+- **The way in, for quests with quests before them** — a quest marked **+** has a chain in front of it ("3 quests first"). Click it and the chain unfolds under it, oldest first, every step with where you stand: **done**, **in your log**, the zone you can take it in now, or the level you need. A green **>** marks where to start, and a click on a step routes you there (or tracks it when it's already in your log). Follows chains all the way back (the longest is 28 quests), picks the version for your faction where a chain has one per side, and skips breadcrumbs you no longer need
 - **Loot** — every boss's drops with their drop chances. WoW Forever's new items, which any boss can drop, have a list of their own. **Shift-click** links an item, **Ctrl-click** tries it on
 - **Path** — the entrance, the bosses and the stops in order, with killed, "you're here" and next marked. Hover a line to see it on the map
 - **Tips** — short boss notes, when **VoidCheatSheet** is installed
+- **Marks** — plan your markers ahead of time: the dungeon's mobs grouped by what they do (healers, crowd control, casters...), with their level and the spells worth knowing. Click one to give it a marker (or "leave it unmarked"), right-click to take yours off, or "Clear all my marks here" to start over; in the run, the marking board's green check puts your marks on them first
 
 ### Soft reserve (raids and dungeons)
 - **Stops loot grabbing:** before the run each player reserves the items they'll roll on, and only they press Need
@@ -46,6 +48,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 - **A green check** on the mobs that matter most, from the dungeon's mob list: healers first, then mana burn, crowd control and summoners. The big green check at the top marks them all in one click. Hover a row to see which mob it probably is
 - **Why "probably":** inside dungeons the game hides a mob's name from addons (it shows it to you), so VoidDungeon matches by dungeon, level, elite and mana or rage. Where two mobs look the same, the check only shows when most of them matter
 - **It learns from your fights:** once a fight is over the game does tell addons which mobs it was, so VoidDungeon notes which mob each look really was. After two pulls agree, that row stops guessing: hover it to see "Seen in your fights here", and its check is for exactly that mob
+- **And from other Void players' fights (WoW Forever):** what their pulls proved is shared too. Once three players agree, a look your own pulls don't know yet shows "Seen in other players' fights here" and gets its check. Your own pulls always win. **Share fight results** in the hub's quick switches turns it off
 - **In combat** the rows wait for the fight to end (the game won't let an addon change what a button marks mid-fight). The bar at the bottom always works: target a mob and click a marker
 - **Keys** for the big check and for each marker on the mob under your mouse (these work in combat too): Key Bindings > AddOns > VoidDungeon
 - **Learn my picks** (off by default): the markers you pick become the checks for mobs that look the same. **Forget** clears them for the dungeon you're in
@@ -70,6 +73,17 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 1. Install with the CurseForge app, or copy the `VoidDungeon` folder into `World of Warcraft/_forever_/Interface/AddOns/`. It needs **VoidMap**.
 2. Restart WoW.
 3. Walk into a dungeon and open your map.
+
+---
+
+## Privacy & Data
+
+- **Shared fight results (WoW Forever):** for a look your pulls proved (dungeon, area, elite, mana or rage, level), which mob it was. Nothing about you, your group or your loot. A new find goes out once you've left the dungeon, or 10 minutes later, so it never shows where you are. Used by others only once three players agree and the dungeon's mob list allows that mob at that look.
+- **How:** by hidden addon whisper, one player at a time, over VoidQuest's sharing channel (VoidDungeon joins it itself when VoidQuest isn't installed). Like any whisper, the player who gets it can see which character sent it; once three players agree, players pass it along, and whoever gets it from them sees their name, not yours. Other players' names aren't saved.
+- **Soft reserve:** your reserves go to your group as addon messages; the leader's VoidDungeon names the reservers in group chat when an item drops and answers whispered `!sr` requests.
+- **BoE from your runs:** "Ask your guild" posts the items in guild chat; guildies' Want clicks come back as addon whispers.
+- **Your own marks** (Marks tab) and learned picks stay on your PC.
+- **Off switch:** **Share fight results** in the hub's quick switches.
 
 ---
 
