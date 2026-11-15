@@ -561,13 +561,185 @@ function VM.Forget(here)
     return n
 end
 
+----------------------------------------------------------------------
+-- Learning from pulls (the user, 2026-11-14: "we should be collecting all fights for the marker
+-- stuff" / "yes build it"). During a fight in a dungeon the game hides mob names from addons, but
+-- after it the damage meter (C_DamageMeter, EnemyDamageTaken) lists every enemy that took damage by
+-- name (measured in Scarlet Monastery 11-14: 3 pulls, nothing secret). During the pull we note what
+-- the board can see of each mob in the fight (level, elite, mana / rage, area); after it, each enemy
+-- is matched to those looks through the dungeon list (its level range +-1, elite, power type). A
+-- look only one enemy fits is credited to it: VoidMarkDB.seen[look] = { [name] = pulls }. That's
+-- the game's own data, not a guess or a click, so it's on without "learn my picks". After 2 pulls
+-- that agree (75%+), the board knows "34 elite mana in Crusader's Chapel" IS a Scarlet Chaplain.
+----------------------------------------------------------------------
+local SEEN_MAX, SURE, SURE_PULLS, CAND_MAX = 3000, 0.75, 2, 3000
+local function seenDB() local d = db(); d.seen = d.seen or {}; return d.seen end
+local nameIdx = {}
+local function seedByName(inst, name)
+    local list = VM.Seed and inst and VM.Seed[inst]
+    if not list or type(name) ~= "string" then return nil end
+    local idx = nameIdx[list]
+    if not idx then
+        idx = {}
+        for _, e in ipairs(list) do idx[e[8]] = idx[e[8]] or e end
+        nameIdx[list] = idx
+    end
+    return idx[name]
+end
+VM.SeedByName = seedByName
+
+-- what pulls showed this look to be: name, pulls naming it, all pulls of the look (nil = not sure)
+-- The exact level decides when it has any pulls; a level next to it only when this one has none,
+-- and only for a mob the dungeon list says also comes at this level (Sol review: a neighbour must
+-- never overrule what was seen at the exact level).
+local function sureOf(r)
+    local best, bn, total = nil, 0, 0
+    for name, n in pairs(r) do
+        if type(n) == "number" and name ~= "t" then
+            total = total + n
+            if n > bn then best, bn = name, n end
+        end
+    end
+    if best and bn >= SURE_PULLS and bn / total >= SURE then return best, bn, total end
+end
+local function knownAs(m)
+    if not (m and m.where) then return nil end
+    local S = seenDB()
+    local r = S[looksKey(m)]
+    if r then return sureOf(r) end
+    for _, dl in ipairs({ -1, 1 }) do
+        local rn = S[looksKey(m, dl)]
+        local name, bn, total = rn and sureOf(rn)
+        local e = name and seedByName(m.inst, name)
+        if e and e[3] == m.elite and e[4] == m.pt and m.lvl and m.lvl >= e[1] and m.lvl <= e[2] then
+            return name, bn, total
+        end
+    end
+end
+VM.KnownAs = knownAs
+
+-- one pull: the looks seen in it and the enemy names the meter gave -> looks credited
+local function creditPull(looks, names, wiped)
+    if type(looks) ~= "table" or type(names) ~= "table" or #looks == 0 or #names == 0 then return 0 end
+    local uniq, have = {}, {}
+    for _, nm in ipairs(names) do
+        if type(nm) == "string" and nm ~= "" and not have[nm] then have[nm] = true; uniq[#uniq + 1] = nm end
+    end
+    local S, n = seenDB(), 0
+    local function add(key, name)
+        local r = S[key]
+        if not r then
+            local c = 0
+            for _ in pairs(S) do c = c + 1; if c >= SEEN_MAX then return false end end
+            r = {}
+            S[key] = r
+        end
+        r[name] = (r[name] or 0) + 1
+        r.t = now()
+        n = n + 1
+        return true
+    end
+    -- one entry per look (two mobs that look the same are one look)
+    local open, byKey = {}, {}
+    for _, L in ipairs(looks) do
+        local key = looksKey(L)
+        if not byKey[key] and L.lvl and L.lvl > 0 then byKey[key] = true; open[#open + 1] = { L = L, key = key } end
+    end
+    local left = {}   -- names nobody has been matched to yet
+    for _, nm in ipairs(uniq) do left[nm] = true end
+    -- 1) the dungeon list: a look only one enemy fits
+    for _, o in ipairs(open) do
+        local fit, count = nil, 0
+        for _, nm in ipairs(uniq) do
+            local e = seedByName(o.L.inst, nm)
+            if e and e[3] == o.L.elite and e[4] == o.L.pt and o.L.lvl >= e[1] - 1 and o.L.lvl <= e[2] + 1 then
+                fit, count = nm, count + 1
+            end
+        end
+        if count == 1 then
+            if not add(o.key, fit) then return n end
+            o.done, left[fit] = true, nil
+        end
+    end
+    -- 2) elimination (WoW Forever's new dungeons aren't in the list, 11-14 The Drowned City): a look
+    -- earlier pulls already know takes its mob out; when exactly one look and one enemy are left,
+    -- they're each other. (Only mobs in the fight are looks, and a mob that took no damage, a
+    -- sheep, isn't an enemy here: then the counts differ and nothing is guessed.)
+    for _, o in ipairs(open) do
+        if not o.done then
+            local known = knownAs(o.L)
+            -- every look known as a mob in this pull is done, also a second one known as the same
+            -- mob (Sol: only the first was, the second could be paired with another name)
+            if known and have[known] then o.done, left[known] = true, nil end
+        end
+    end
+    -- One enemy name left: every look still open is that mob (live 11-14, The Drowned City: a pack
+    -- of six Mindless Gorgers at levels 37 and 38 is ONE name on the meter). A pack only ends when
+    -- every mob in it died, so every mob that was in the fight took damage and is on the list;
+    -- not after a wipe (wiped = true: mobs lived, the counts mean nothing), and never against the
+    -- dungeon list (a listed mob must fit the look it's paired with).
+    if wiped then return n end
+    local function fits(L, name)   -- never against the list: a listed mob must fit the look
+        local e = seedByName(L.inst, name)
+        return not e or (e[3] == L.elite and e[4] == L.pt and L.lvl >= e[1] - 1 and L.lvl <= e[2] + 1)
+    end
+    local lastName, namesLeft = nil, 0
+    for nm in pairs(left) do lastName, namesLeft = nm, namesLeft + 1 end
+    if namesLeft == 1 then
+        for _, o in ipairs(open) do
+            if not o.done and fits(o.L, lastName) then
+                if not add(o.key, lastName) then return n end
+                o.done = true
+            end
+        end
+    end
+    -- 3) across pulls (the user, 2026-11-14: "yes build it"; live The Drowned City: packs of two
+    -- or more kinds taught nothing in 21 pulls): a look's mob is in EVERY pull that look is in, so
+    -- each look keeps the names present every time (VoidMarkDB.cand[look]); one name left = that
+    -- mob. Brinescale Explorer turns up in many packs, the Sorceress only where the mana look is.
+    -- A pull that clears every name (a critter slipped through, a mob that took no damage) starts
+    -- that look over from this pull's names.
+    local C = db().cand or {}
+    db().cand = C
+    for _, o in ipairs(open) do
+        local c = C[o.key]
+        if not c then
+            local k = 0
+            for _ in pairs(C) do k = k + 1; if k >= CAND_MAX then break end end
+            if k < CAND_MAX then c = { pulls = 0 }; C[o.key] = c end
+        end
+        if c then
+            local nextSet, count = {}, 0
+            for _, nm in ipairs(uniq) do
+                if (c.pulls == 0 or (c.names and c.names[nm])) and fits(o.L, nm) then nextSet[nm] = true; count = count + 1 end
+            end
+            if count == 0 then   -- nothing in common: start over from this pull
+                for _, nm in ipairs(uniq) do if fits(o.L, nm) then nextSet[nm] = true; count = count + 1 end end
+                c.pulls = 0
+            end
+            c.names, c.pulls, c.t = nextSet, c.pulls + 1, now()
+            if count == 1 and c.pulls >= 2 and not o.done then
+                local only = next(nextSet)
+                if not add(o.key, only) then return n end
+                o.done = true
+            end
+        end
+    end
+    return n
+end
+VM.CreditPull = creditPull
+
 -- The dungeon list (Seed.lua, tools/cmd/vmark-seed from the CMaNGOS classic database; the user,
 -- 2026-11-14: "its just data to mark high importance mobs over others"): every mob of this dungeon
 -- with the same elite flag and power type whose level range holds this level. -> average score of
--- those (healer 100, mana burn 85, CC 60, summoner 50, caster 20...), their names, how many.
+-- those (healer 100, mana burn 85, CC 60, summoner 50, caster 20...), their names, how many, and
+-- the name pulls showed it to be. A look pulls know is scored as exactly that mob.
 local function seedOf(m)
+    local known = knownAs(m)
+    local e = known and seedByName(m.inst, known)
+    if e then return e[5], { e[8] .. (e[7] ~= "" and (" (" .. e[7] .. ")") or "") }, 1, known end
     local list = VM.Seed and m and m.inst and VM.Seed[m.inst]
-    if not list or not m.lvl or m.lvl <= 0 then return nil end
+    if not list or not m.lvl or m.lvl <= 0 then return nil, nil, nil, known end
     local sum, n, names = 0, 0, {}
     for _, e in ipairs(list) do
         if e[3] == m.elite and e[4] == m.pt and m.lvl >= e[1] and m.lvl <= e[2] then
@@ -575,8 +747,8 @@ local function seedOf(m)
             if #names < 4 then names[#names + 1] = e[8] .. (e[7] ~= "" and (" (" .. e[7] .. ")") or "") end
         end
     end
-    if n == 0 then return nil end
-    return math.floor(sum / n + 0.5), names, n
+    if n == 0 then return nil, nil, nil, known end
+    return math.floor(sum / n + 0.5), names, n, known
 end
 VM.SeedOf = seedOf
 local SEED_MIN = 50   -- a summoner or more on average: worth a Skull / X suggestion
@@ -592,7 +764,10 @@ for i = 1, ROWS do
         local m = self.mob
         if not m then return end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        if m.seedNames then
+        if m.known then
+            GameTooltip:AddLine(("Seen in your fights here: %s"):format(m.seedNames and m.seedNames[1] or m.known), 1, 1, 1, true)
+            GameTooltip:AddLine("The game names mobs to addons once a fight ends; mobs that look like this were this one.", 0.6, 0.6, 0.6, true)
+        elseif m.seedNames then
             GameTooltip:AddLine(("Probably: %s%s"):format(table.concat(m.seedNames, ", "),
                 (m.seedN or 0) > #m.seedNames and (" (+%d more)"):format(m.seedN - #m.seedNames) or ""), 1, 1, 1, true)
             GameTooltip:AddLine("From the dungeon's mob list, by level, elite and mana / rage (the game hides the name from addons).", 0.6, 0.6, 0.6, true)
@@ -676,8 +851,11 @@ local function pack()
         local u = "nameplate" .. i
         if hostileMob(u) then
             local cls = readable(UnitClassification(u))
-            if cls ~= "minus" and cls ~= "trivial" then
-                list[#list + 1] = { unit = u, lvl = readable(UnitLevel(u)) or 0,
+            local lvl = readable(UnitLevel(u)) or 0
+            -- critters come back "normal" at level 1 (live 11-14, a crab at the Altar of the Serpent
+            -- became a look); no dungeon mob is level 1-5 (skull bosses are -1 and stay)
+            if cls ~= "minus" and cls ~= "trivial" and not (lvl >= 1 and lvl <= 5) then
+                list[#list + 1] = { unit = u, lvl = lvl,
                     elite = (cls == "elite" or cls == "rareelite" or cls == "worldboss") and 1 or 0,
                     pt = readable(UnitPowerType(u)), where = w, sub = sub, inst = inst }
             end
@@ -799,7 +977,7 @@ function board:Fill()
         elseif s and not taken[s] then
             m.sugg, m.from, taken[s] = s, "learned", true
         end
-        m.seed, m.seedNames, m.seedN = seedOf(m)
+        m.seed, m.seedNames, m.seedN, m.known = seedOf(m)
     end
     for i = 1, math.min(#mobs, ROWS) do
         local m = mobs[i]
@@ -958,6 +1136,142 @@ bev:SetScript("OnEvent", function(_, event, unit)
         end
     end
     if not InCombatLockdown() then scheduleFill() end
+end)
+
+-- The pull recorder (see "Learning from pulls" above): while a fight in a dungeon or raid goes on,
+-- every 2 s the looks of the hostile nameplates in the fight are noted (level, elite and power type
+-- stay readable in combat, measured 11-14); 1.5 s after it ends the meter's enemy list is read (out
+-- of combat it isn't secret) and creditPull matches the two. No chat, nothing sent.
+local pullLooks, pullStart, pullTick, pullSession, pullCombatSeen, pullCombatHidden
+local function noteLooks()
+    if not pullLooks then return end
+    for _, m in ipairs(pack()) do
+        local raw = UnitAffectingCombat(m.unit)
+        local fighting = readable(raw)
+        -- how often the game hid "in combat" (then the mob counts as in the fight): pull stats
+        pullCombatSeen = (pullCombatSeen or 0) + 1
+        if secret(raw) then pullCombatHidden = (pullCombatHidden or 0) + 1 end
+        -- only a clear "in combat" (Sol: a hidden answer let unpulled mobs nearby in; measured
+        -- 11-14 it was never hidden)
+        if fighting == true and m.lvl and m.lvl > 0 and m.pt ~= nil then
+            local k = looksKey(m)
+            if not pullLooks[k] then
+                pullLooks[k] = { lvl = m.lvl, elite = m.elite, pt = m.pt, where = m.where, sub = m.sub, inst = m.inst }
+            end
+        end
+    end
+end
+-- The meter's enemies of the fight that just ended: names (nil when the meter isn't there / hidden).
+-- THIS fight's session (Sol review: picking by closest length could take an older fight or the
+-- whole run): the session id the meter announced during the pull, else the newest session it
+-- lists, else "Current"; and its length must fit the fight (the group may pull a little earlier).
+local function plausible(d, dur)
+    d = readable(d)
+    return type(d) == "number" and d > 0 and math.abs(d - dur) <= math.max(15, dur * 0.75)
+end
+local function meterEnemies(dur, sid)
+    local M = C_DamageMeter
+    if not M then return nil end
+    local kind = Enum and Enum.DamageMeterType and Enum.DamageMeterType.EnemyDamageTaken or 10
+    local sess, fp
+    -- an id the meter announced during this pull is this fight's: a missing length doesn't rule it
+    -- out there (it does for the others, Sol)
+    local announced = sid ~= nil
+    if not sid and M.GetAvailableCombatSessions then
+        local ok, list = pcall(M.GetAvailableCombatSessions)
+        if ok and type(list) == "table" then
+            local newest
+            for _, s in ipairs(list) do
+                local id = readable(s.sessionID)
+                if type(id) == "number" and (not newest or id > newest.id) then newest = { id = id, d = s.durationSeconds } end
+            end
+            if newest and plausible(newest.d, dur) then sid = newest.id end
+        end
+    end
+    if sid and M.GetCombatSessionFromID then
+        local ok, s = pcall(M.GetCombatSessionFromID, sid, kind)
+        if ok and type(s) == "table" and (plausible(s.durationSeconds, dur)
+            or (announced and type(readable(s.durationSeconds)) ~= "number")) then sess = s; fp = "id" .. tostring(sid) end
+    end
+    if not sess and M.GetCombatSessionFromType then
+        local st = Enum and Enum.DamageMeterSessionType and Enum.DamageMeterSessionType.Current or 1
+        local ok, s = pcall(M.GetCombatSessionFromType, st, kind)
+        local okd, d = pcall(M.GetSessionDurationSeconds, st)
+        if ok and type(s) == "table" and okd and type(readable(d)) == "number" and plausible(d, dur) then sess = s; fp = "cur" .. tostring(readable(d)) end
+    end
+    if not (sess and type(sess.combatSources) == "table") then return nil end
+    local list = {}
+    for _, src in ipairs(sess.combatSources) do
+        local ok, nm = pcall(function() return src.name end)
+        nm = ok and readable(nm) or nil
+        local okd, dmg = pcall(function() return src.totalAmount end)
+        if type(nm) == "string" and nm ~= "" then list[#list + 1] = { name = nm, dmg = okd and readable(dmg) or nil } end
+    end
+    -- the same session as last time (no new one was made for this fight): its names are the last
+    -- pull's, not this one's (Sol)
+    for _, e in ipairs(list) do fp = fp .. "|" .. e.name .. ":" .. tostring(e.dmg) end
+    if fp == VM.lastSession then return nil end
+    VM.lastSession = fp
+    return VM.MainEnemies(list)
+end
+-- The pack, without the critters an area attack caught (live 11-14, The Drowned City: Crab, Toad,
+-- Snake come back "normal", and the board never shows them, so a pack had more names than looks
+-- and nothing could be paired): an enemy that took under 2% of the pack's top damage is left out.
+-- (A sheep takes none and isn't on the meter's list at all.)
+function VM.MainEnemies(list)
+    local top = 0
+    for _, e in ipairs(list) do if type(e.dmg) == "number" and e.dmg > top then top = e.dmg end end
+    local out = {}
+    for _, e in ipairs(list) do
+        if type(e.dmg) ~= "number" or top <= 0 or e.dmg >= top * 0.02 then out[#out + 1] = e.name end
+    end
+    return out
+end
+VM.MeterEnemies = meterEnemies
+local pev = CreateFrame("Frame")
+pev:RegisterEvent("PLAYER_REGEN_DISABLED")
+pev:RegisterEvent("PLAYER_REGEN_ENABLED")
+pev:RegisterEvent("DAMAGE_METER_COMBAT_SESSION_UPDATED")
+pev:SetScript("OnEvent", function(_, event, a1, a2)
+    if event == "DAMAGE_METER_COMBAT_SESSION_UPDATED" then
+        -- (type, sessionID): the session this pull is being written to
+        local id = readable(a2)
+        if pullLooks and type(id) == "number" and (not pullSession or id > pullSession) then pullSession = id end
+        return
+    end
+    if event == "PLAYER_REGEN_DISABLED" then
+        if pullTick then pullTick:Cancel(); pullTick = nil end
+        pullSession = nil
+        if not inInstance() then pullLooks = nil; return end
+        pullCombatSeen, pullCombatHidden = 0, 0
+        pullLooks, pullStart = {}, GetTime()
+        pcall(noteLooks)
+        pullTick = C_Timer.NewTicker and C_Timer.NewTicker(2, function() pcall(noteLooks) end) or nil
+    else
+        if pullTick then pullTick:Cancel(); pullTick = nil end
+        local looks, dur, sid = pullLooks, pullStart and (GetTime() - pullStart) or 0, pullSession
+        -- died in it (a wipe): mobs lived, so a pack can't be told apart by who took damage
+        local wiped = UnitIsDeadOrGhost and readable(UnitIsDeadOrGhost("player")) and true or false
+        pullLooks, pullStart, pullSession = nil, nil, nil
+        if not looks or dur < 3 then return end
+        C_Timer.After(1.5, function()
+            if InCombatLockdown() then return end   -- the next pull already started: the meter is secret again
+            local list = {}
+            for _, L in pairs(looks) do list[#list + 1] = L end
+            local ok, names = pcall(meterEnemies, dur, sid)
+            if ok and names then
+                local okc, n = pcall(creditPull, list, names, wiped)
+                VM.lastPull = { looks = #list, enemies = #names, credited = okc and n or 0 }
+                -- the last 30 pulls, to check learning in the game (VoidMarkDB.pullStats)
+                local st = db().pullStats or {}
+                db().pullStats = st
+                st[#st + 1] = { t = now(), looks = #list, enemies = #names, credited = okc and n or 0,
+                    seen = pullCombatSeen, hidden = pullCombatHidden, wiped = wiped or nil }
+                while #st > 30 do table.remove(st, 1) end
+                if board:IsShown() and not InCombatLockdown() then board:Fill() end
+            end
+        end)
+    end
 end)
 
 -- on a restricted map (dungeon, raid) mob names are hidden, so marking by importance can't work

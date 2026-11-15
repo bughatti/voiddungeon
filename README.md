@@ -45,6 +45,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 - **A marking board** comes up in dungeon and raid groups: the mobs in front of you, one row each, with their name, level and elite tag, and a button per marker (Skull, X, and the crowd-control markers of the classes in your group)
 - **A green check** on the mobs that matter most, from the dungeon's mob list: healers first, then mana burn, crowd control and summoners. The big green check at the top marks them all in one click. Hover a row to see which mob it probably is
 - **Why "probably":** inside dungeons the game hides a mob's name from addons (it shows it to you), so VoidDungeon matches by dungeon, level, elite and mana or rage. Where two mobs look the same, the check only shows when most of them matter
+- **It learns from your fights:** once a fight is over the game does tell addons which mobs it was, so VoidDungeon notes which mob each look really was. After two pulls agree, that row stops guessing: hover it to see "Seen in your fights here", and its check is for exactly that mob
 - **In combat** the rows wait for the fight to end (the game won't let an addon change what a button marks mid-fight). The bar at the bottom always works: target a mob and click a marker
 - **Keys** for the big check and for each marker on the mob under your mouse (these work in combat too): Key Bindings > AddOns > VoidDungeon
 - **Learn my picks** (off by default): the markers you pick become the checks for mobs that look the same. **Forget** clears them for the dungeon you're in

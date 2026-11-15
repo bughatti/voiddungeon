@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## 0.4.1 — 2026-11-14
+
+- **The marking board learns from your fights.** Inside a dungeon the game hides mob names from addons during a fight but names them once it's over, so VoidDungeon now notes which mob each look (level, elite, mana or rage, area) really was. After two pulls agree, the row knows the mob instead of guessing, and its green check is for exactly that mob. It works in WoW Forever's new dungeons too, which aren't in the mob list: there it learns from mobs fought alone, from packs of one kind, by elimination once some are known, and by comparing pulls: a look's mob is the one name present every time that look is in the fight. Nothing is sent anywhere.
+
 ## 0.4.0 — 2026-11-14
 
 - **New: mark the pack.** In dungeon and raid groups a marking board shows the mobs in front of you, one row each, with a button per marker (Skull, X and the crowd-control markers of the classes in your group).
