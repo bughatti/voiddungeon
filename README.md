@@ -11,7 +11,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 ## Features
 
 ### Entrances on the world map
-- **Every dungeon and raid entrance** on VoidMap's zone and continent maps (WoW Forever's map shows none): a cyan ring for dungeons, orange for raids. Doors shared by several, like Scarlet Monastery or Blackrock Mountain, show one icon with a count
+- **Every dungeon and raid entrance** on VoidMap's zone and continent maps (WoW Forever's map shows none): a cyan ring for dungeons, orange for raids. Doors shared by several, like Scarlet Monastery or Blackrock Mountain, show one icon with a count. The few entrances no data has yet are learned from Void players walking in
 - **Hover** for the name, the level range coloured for your level, and 5-player or raid size
 - **Left-click** opens its dungeon map (pick the wing first when several share the door), **right-click** shows the way there with VoidGPS
 
@@ -79,6 +79,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 ## Privacy & Data
 
 - **Shared fight results (WoW Forever):** for a look your pulls proved (dungeon, area, elite, mana or rage, level), which mob it was. Nothing about you, your group or your loot. A new find goes out once you've left the dungeon, or 10 minutes later, so it never shows where you are. Used by others only once three players agree and the dungeon's mob list allows that mob at that look.
+- **Dungeon entrances (WoW Forever):** only for the few dungeons whose entrance no data has (Krol'dok Stronghold, Alcaz Prison, Blackmaw Hold, Shaper's Terrace): the spot where you walked in, rounded to 1% of the zone map. It goes out 10 minutes later, and others use it once two players saw the same. **Share fight results** turns it off too.
 - **Camp blueprint drops (WoW Forever):** when a "Blueprint: ..." item drops in a dungeon, which blueprint, which dungeon and which boss. Not who looted it or who was there. It goes out 10 minutes later, and others use it once two players saw the same. **Share fight results** turns it off too.
 - **How:** by hidden addon whisper, one player at a time, over VoidQuest's sharing channel (VoidDungeon joins it itself when VoidQuest isn't installed). Like any whisper, the player who gets it can see which character sent it; once three players agree, players pass it along, and whoever gets it from them sees their name, not yours. Other players' names aren't saved.
 - **Soft reserve:** your reserves go to your group as addon messages; the leader's VoidDungeon names the reservers in group chat when an item drops and answers whispered `!sr` requests.
@@ -92,7 +93,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 
 - Soft reserve needs the leader to have VoidDungeon; the rest of the group can use whispers or softres.it. When nobody who reserved an item is in the group, it's a free roll.
 
-- Maps cover the Classic dungeons and most of WoW Forever's new ones. The few without a map yet (The Drowned City, Krol'dok Stronghold, Alcaz Prison, Blackmaw Hold, The Shaper's Terrace) show their bosses and loot until they get one.
+- Maps cover the Classic dungeons and most of WoW Forever's new ones. The few without a map yet (Alcaz Prison, Blackmaw Hold, Shaper's Terrace) show their bosses and loot until they get one.
 - Drop chances are Classic's. WoW Forever's new items have no known chance yet.
 
 ---

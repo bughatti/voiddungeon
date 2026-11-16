@@ -1,5 +1,14 @@
 # VoidDungeon Changelog
 
+## 0.5.0 — 2026-11-15
+
+- **Krol'dok Stronghold's entrance is on the map** (Riverglades, measured by a Void player walking in).
+- **Entrances no data has are learned:** when you walk into Krol'dok Stronghold, Alcaz Prison, Blackmaw Hold or Shaper's Terrace, VoidDungeon puts its entrance on your map where you walked in, and shares it: once two Void players agree, everyone sees it.
+- **The Drowned City's entrance is on the map now** (off the northwest coast of Stranglethorn Vale).
+- **Maps for Krol'dok Stronghold and The Drowned City** (the Atlas Team's new maps), with every boss and its loot. The Drowned City's bosses showed no loot before: the old data pointed at the wrong NPCs.
+- **Alcaz Prison, Blackmaw Hold and Shaper's Terrace are in the dungeon list now**, with their bosses in order and their loot (no map yet). Before, only dungeons with a map were listed.
+- **Dungeon quests for WoW Forever's new dungeons** (Krol'dok Stronghold, Alcaz Prison, Blackmaw Hold, Shaper's Terrace, more for The Drowned City) and the new quests of Razorfen Downs, Zul'Farrak, Maraudon and City of Dalaran. Slavecrusher Grox in Krol'dok Stronghold drops the Expert Campfire blueprint, so VoidProf's Camping tab can show the way there.
+
 ## 0.4.4 — 2026-11-15
 
 - **Where camp blueprints really drop:** when a "Blueprint: ..." item drops in a dungeon, VoidDungeon notes the dungeon and the boss (the one whose fight you just finished) and tells other Void players. Once 2 players have seen the same, VoidProf's Camping tab shows it as the source. Off with "Share fight results".

@@ -154,6 +154,8 @@ end
 -- -> { { boss, npc, dungeon (name), lv ("15-24"), min, pct (0 = not known yet), at = { {uiMap, x, y}, ... } }, ... },
 -- lowest dungeon first; at = its entrances (0..1). Empty when no boss in the data drops it.
 local dropIndex
+-- rebuilt on the next DropsOf (EntranceLearn.lua: a learned entrance gives a boss's dungeon its door)
+function J:ForgetDrops() dropIndex = nil end
 -- a dungeon's entrances by its name ("Sunken Temple"): { {uiMap, x, y}, ... } or nil
 function J:EntranceOf(name)
     for _, e in ipairs(ns.Entrances or {}) do

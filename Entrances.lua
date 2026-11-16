@@ -44,10 +44,12 @@ end
 
 local function sizeText(e)
     if isRaid(e) then return e.size .. "-player raid" end
+    if (e.size or 0) == 0 then return "instance" end
     return "5-player dungeon"
 end
 
 local function levelText(e)
+    if (e.min or 0) == 0 then return "?" end
     if e.min == e.max then return tostring(e.min) end
     return e.min .. "-" .. e.max
 end
@@ -193,6 +195,10 @@ local function icon(i)
             local r, g, b = levelColor(e.min)
             GameTooltip:AddDoubleLine("Level " .. levelText(e), sizeText(e), r, g, b, 0.8, 0.8, 0.8)
             if not (e.dungeon and J.byName[e.dungeon]) then GameTooltip:AddLine("No dungeon map yet.", 0.55, 0.55, 0.6) end
+            -- an entrance no data has, learned from walk-ins (EntranceLearn.lua)
+            if e.measured then GameTooltip:AddLine("Entrance: where Void players walked in.", 0.55, 0.8, 0.55) end
+            if e.learned == "own" then GameTooltip:AddLine("Entrance: where you walked in.", 0.55, 0.8, 0.55)
+            elseif e.learned then GameTooltip:AddLine(("Entrance: where %d Void players walked in."):format(e.learned), 0.55, 0.8, 0.55) end
         end
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine(#spot.list > 1 and "Left-click: pick one for the dungeon view" or "Left-click: dungeon view", 0.6, 0.6, 0.6)
@@ -281,4 +287,197 @@ local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
 boot:SetScript("OnEvent", function()
     if VoidMap and VoidMap.OnReady then VoidMap:OnReady(setup) end
+end)
+
+----------------------------------------------------------------------
+-- Learning entrances no data has (formerly its own file; kept in Entrances.lua so a /reload
+-- loads it: a new TOC file needs a game restart)
+-- EntranceLearn.lua -- entrances no data has, learned from players walking in (the user,
+-- 2026-11-15: "do we have coordinates for all new 9 dungeons, it doesnt show on the map";
+-- decided: measure + recorder, the web lists only say where to walk).
+--
+-- Krol'dok Stronghold, Alcaz Prison, Blackmaw Hold and Shaper's Terrace have no entrance in any data
+-- we ship (Data/Entrances.lua: ns.EntrancesUnknown). While you're outdoors VoidDungeon keeps your last
+-- few positions; when you WALK into one of those (you were moving a moment before, no summon, no
+-- flight, not a login or reload), the spot just outside is its entrance:
+--   VoidDungeonDB.entranceSpots[name] = { map, x, y, t }   your own; shown at once
+-- and it goes to other Void players 10 minutes later (kind "e": piece = name, key = uiMap, value =
+-- the 1% map cell "x:y"), used by them once 2 different players handed the same over.
+-- Learned entrances join ns.Entrances (e.learned = "own" | n players), so the map icon, the way
+-- there and J:EntranceOf / J:DropsOf all use them.
+----------------------------------------------------------------------
+-- (J is the file's own local)
+local L = {}
+J.EntranceLearn = L
+
+local SW = "e"
+local FRESH = 8          -- s: the last outdoor position must be this recent when you zone in
+local MOVE_SPAN = 4      -- s: and you moved within this long before it
+local MOVED = 0.002      -- of the map's width: a few yards (standing still = not walking in)
+local SUMMON_GAP = 120   -- s after a summon offer: a zone-in may be the summon
+
+local function secret(v) return issecretvalue and issecretvalue(v) end
+local function norm(s) return (s or ""):lower():gsub("^the ", ""):gsub("[^%w]", "") end
+
+local function db()
+    VoidDungeonDB = VoidDungeonDB or {}
+    VoidDungeonDB.entranceSpots = VoidDungeonDB.entranceSpots or {}
+    return VoidDungeonDB.entranceSpots
+end
+
+-- the unknown entrance a GetInstanceInfo name means, or nil
+local function unknownOf(name)
+    if type(name) ~= "string" or secret(name) then return nil end
+    local n = norm(name)
+    for _, u in ipairs(ns.EntrancesUnknown or {}) do
+        if norm(u.name) == n or (u.dungeon and norm(u.dungeon) == n) then return u end
+    end
+end
+local function unknownByName(name)
+    for _, u in ipairs(ns.EntrancesUnknown or {}) do if u.name == name then return u end end
+end
+
+local function swarm()
+    if not (VoidSwarm and VoidSwarm.Want) then return nil end
+    if not L.wanted then
+        L.wanted = true
+        VoidDungeonDB = VoidDungeonDB or {}
+        VoidDungeonDB.swarmE = VoidDungeonDB.swarmE or {}
+        VoidSwarm.Want(SW, { need = 2, store = VoidDungeonDB.swarmE, maxPieces = 12, maxKeys = 3,
+            paused = function() return VoidMarkDB and VoidMarkDB.shareOff and true or false end,   -- "Share fight results" off
+            valid = function(piece, key, value)
+                local m = tonumber(key)
+                local cx, cy = tostring(value):match("^(%d%d?):(%d%d?)$")
+                return unknownByName(piece) ~= nil and m ~= nil and m > 0 and m < 100000 and tostring(m) == key
+                    and cx ~= nil and true or false
+            end })
+    end
+    return VoidSwarm.Get and VoidSwarm.Get()
+end
+
+local function cellOf(x, y)
+    local cx, cy = math.floor(x * 100), math.floor(y * 100)
+    if cx < 0 or cx > 99 or cy < 0 or cy > 99 then return nil end
+    return cx .. ":" .. cy
+end
+
+-- where an unknown entrance is: own spot first, else the one 2+ players agree on
+-- -> map, x, y, learned ("own" or the number of players) | nil
+function L:SpotOf(name)
+    local own = db()[name]
+    if own and own.map and own.x and own.y then return own.map, own.x, own.y, "own" end
+    local net = swarm()
+    if not (net and net.Piece) then return nil end
+    local ok, piece = pcall(net.Piece, net, SW, name)
+    for key, value in pairs(ok and piece or {}) do
+        local cx, cy = tostring(value):match("^(%d+):(%d+)$")
+        local _, n = net:Get(SW, name, key)
+        if cx and n and n >= 2 then
+            return tonumber(key), (tonumber(cx) + 0.5) / 100, (tonumber(cy) + 0.5) / 100, n
+        end
+    end
+end
+
+-- learned entrances into ns.Entrances (replacing earlier learned ones), then the map icons
+function L:Apply()
+    local list = ns.Entrances
+    if not list then return end
+    for i = #list, 1, -1 do if list[i].learned then table.remove(list, i) end end
+    for _, u in ipairs(ns.EntrancesUnknown or {}) do
+        local map, x, y, how = self:SpotOf(u.name)
+        if map then
+            list[#list + 1] = { name = u.name, dungeon = u.dungeon, min = u.min, max = u.max, size = u.size,
+                at = { { map, x, y } }, learned = how }
+        end
+    end
+    if J.ForgetDrops then J:ForgetDrops() end
+    if ns.EntranceIcons and ns.EntranceIcons.Refresh then ns.EntranceIcons:Refresh() end
+end
+
+-- note a walk-in (from the zone-in check, or a test)
+function L:Record(name, map, x, y)
+    local u = unknownByName(name)
+    map, x, y = tonumber(map), tonumber(x), tonumber(y)
+    if not (u and map and x and y) or x <= 0 or x >= 1 or y <= 0 or y >= 1 then return false end
+    db()[name] = { map = map, x = math.floor(x * 10000 + 0.5) / 10000, y = math.floor(y * 10000 + 0.5) / 10000, t = time() }
+    local cell = cellOf(x, y)
+    local net = swarm()
+    if cell and net and net.Report then pcall(net.Report, net, SW, name, tostring(map), cell, 600) end
+    J:Print(("noted %s's entrance where you walked in (%.1f, %.1f): it's on the map now."):format(name, x * 100, y * 100))
+    self:Apply()
+    return true
+end
+
+----------------------------------------------------------------------
+-- Watching: your outdoor positions, then the zone-in
+----------------------------------------------------------------------
+local samples = {}   -- { t, map, x, y }, newest last, a few seconds' worth
+local summonedAt
+local leaving   -- the walk-in spot as it was when the loading screen began (or false)
+
+local function sample()
+    if IsInInstance() or (UnitOnTaxi and UnitOnTaxi("player")) then wipe(samples) return end
+    local map = C_Map.GetBestMapForUnit("player")
+    if not map or secret(map) then return end
+    local pos = C_Map.GetPlayerMapPosition(map, "player")
+    if not pos then return end
+    local x, y = pos:GetXY()
+    if not (x and y) or secret(x) or secret(y) or x <= 0 or y <= 0 then return end
+    samples[#samples + 1] = { t = GetTime(), map = map, x = x, y = y }
+    while #samples > 8 do table.remove(samples, 1) end
+end
+
+-- the walk-in spot: the newest outdoor position, if fresh and you were moving just before it
+local function walkedIn()
+    local last = samples[#samples]
+    if not last or GetTime() - last.t > FRESH then return nil end
+    if summonedAt and GetTime() - summonedAt < SUMMON_GAP then return nil end
+    for i = #samples - 1, 1, -1 do
+        local s = samples[i]
+        if last.t - s.t > MOVE_SPAN then break end
+        if s.map == last.map and math.max(math.abs(s.x - last.x), math.abs(s.y - last.y)) >= MOVED then return last end
+    end
+    return nil
+end
+
+local function zonedIn()
+    local name, kind = GetInstanceInfo()
+    if kind ~= "party" and kind ~= "raid" then return end
+    local u = unknownOf(name)
+    -- judged when the loading screen began: a slow load must not make the walk-in look stale (Codex)
+    local spot = u and leaving
+    leaving = nil
+    wipe(samples)
+    if u and spot then pcall(L.Record, L, u.name, spot.map, spot.x, spot.y) end
+end
+
+local ev = CreateFrame("Frame")
+ev:RegisterEvent("PLAYER_LOGIN")
+ev:RegisterEvent("PLAYER_ENTERING_WORLD")
+pcall(ev.RegisterEvent, ev, "CONFIRM_SUMMON")
+ev:RegisterEvent("PLAYER_LEAVING_WORLD")
+ev:SetScript("OnEvent", function(_, event, isLogin, isReload)
+    if event == "PLAYER_LOGIN" then
+        -- listen for other players' finds from the start, and hand your own over again (one first
+        -- seen while the network was down still goes out; a repeat isn't held again)
+        C_Timer.After(3, function()
+            local net = swarm()
+            if not (net and net.Report) then return end
+            for name, s in pairs(db()) do
+                local cell = unknownByName(name) and s.map and s.x and s.y and cellOf(s.x, s.y)
+                if cell then pcall(net.Report, net, SW, name, tostring(s.map), cell, 600) end
+            end
+        end)
+        C_Timer.NewTicker(1, function() pcall(sample) end)
+        -- other players' finds arrive over time: look again now and then
+        C_Timer.NewTicker(120, function() pcall(L.Apply, L) end)
+        C_Timer.After(5, function() pcall(L.Apply, L) end)
+    elseif event == "PLAYER_LEAVING_WORLD" then
+        leaving = (not IsInInstance()) and walkedIn() or false
+    elseif event == "CONFIRM_SUMMON" then
+        summonedAt = GetTime()
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        if isLogin or isReload then wipe(samples); leaving = nil return end
+        pcall(zonedIn)
+    end
 end)
