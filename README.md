@@ -27,8 +27,14 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 - **The way in, for quests with quests before them** — a quest marked **+** has a chain in front of it ("3 quests first"). Click it and the chain unfolds under it, oldest first, every step with where you stand: **done**, **in your log**, the zone you can take it in now, or the level you need. A green **>** marks where to start, and a click on a step routes you there (or tracks it when it's already in your log). Follows chains all the way back (the longest is 28 quests), picks the version for your faction where a chain has one per side, and skips breadcrumbs you no longer need
 - **Loot** — every boss's drops with their drop chances. WoW Forever's new items, which any boss can drop, have a list of their own. **Shift-click** links an item, **Ctrl-click** tries it on
 - **Path** — the entrance, the bosses and the stops in order, with killed, "you're here" and next marked. Hover a line to see it on the map
-- **Tips** — short boss notes, when **VoidCheatSheet** is installed
+- **Tips** — every boss: the short version, its abilities and what to do, and the tip for tanks, healers and damage. Plus the dungeon's dangerous trash
 - **Marks** — plan your markers ahead of time: the dungeon's mobs grouped by what they do (healers, crowd control, casters...), with their level and the spells worth knowing. Click one to give it a marker (or "leave it unmarked"), right-click to take yours off, or "Clear all my marks here" to start over; in the run, the marking board's green check puts your marks on them first
+
+### Boss card
+- **When a boss fight starts**, a small card pops up with the boss's short version and the tip for your group role (tank, healer or damage)
+- **Tips** on the card opens the dungeon's full notes (right after the fight when you click it during one). Drag the card anywhere; it goes 3 seconds after the fight
+- **On or off:** the **Boss card when a fight starts** box at the top of the Tips tab, or **Boss card** in the Void hub's quick switches
+- (These were VoidCheatSheet's WoW Forever sheets: VoidCheatSheet is for retail now, everything for WoW Forever's dungeons is here)
 
 ### Soft reserve (raids and dungeons)
 - **Stops loot grabbing:** before the run each player reserves the items they'll roll on, and only they press Need
@@ -101,7 +107,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 ## Compatibility
 
 - **WoW Forever**
-- Requires **VoidMap**. Works with **VoidGPS** (routes to quest givers) and **VoidCheatSheet** (boss tips)
+- Requires **VoidMap**. Works with **VoidGPS** (routes to quest givers)
 
 ---
 
@@ -109,6 +115,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 
 - **Dungeon maps** by the Atlas Team: Dan Gilbert, Lothaer, Arith Hsu and the Atlas Team ([Atlas](https://github.com/arithmandar/Atlas)), GPL-2.0-or-later.
 - **Drop chances, dungeon quests and entrances** from VoidDB. Which quests belong to which dungeon also comes from Blizzard's own WoW Forever quest data. **VoidDB**, the game data the Void addons ship, is built from Blizzard's game data, finds shared by Void players, and open data: NorgannonDB by Maro, QuestieDB, pfQuest by Shagu, DungeonJournal by Exehn and CMaNGOS classic-db (GPL-3.0; pfQuest MIT). Full credits and licences: NOTICE.txt in the addon folder. Thank you to all of them.
+- **Boss notes** written by us from WoW Forever's dungeon guides and our own runs; a note only one guide gives says so.
 - **Which mobs matter for marking:** each mob's spells, level and class from the [CMaNGOS classic database](https://github.com/cmangos/classic-db) (GPL-3.0)
 
 ---

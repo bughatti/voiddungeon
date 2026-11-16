@@ -3,7 +3,7 @@
 --   Quests  your quests for this dungeon (the quest log's header for it)
 --   Loot    every boss's drops, or the selected boss's
 --   Path    entrance, bosses and stops in Atlas's order; hover = spot on the map
---   Tips    VoidCheatSheet's notes (needs VoidCheatSheet)
+--   Tips    the boss sheets (Data/Sheets.lua) + the boss card box (Sheets.lua)
 --   Marks   your own markers per mob, used by the marking board in the run (Mark.lua)
 --   Reserve soft reserve for the group (Reserve.lua)
 --   BoE     BoE drops from your runs, handed out to the guild (Handout.lua)
@@ -342,11 +342,13 @@ local function pathEntries(out)
     end
 end
 
--- VoidCheatSheet's sheet for this dungeon, if it's installed.
+-- this dungeon's boss sheet (Data/Sheets.lua; it was VoidCheatSheet's until 2026-11-15)
 local function sheet()
-    local D = VoidCheatSheetData
+    local D = ns.Sheets
     if not (D and D.dungeons and J.cur) then return nil end
     local want = J.cur.name:lower():gsub("^the ", "")
+    local alias = D.instanceAliases[(J.cur.name:lower():gsub("[%s%-']", ""))]
+    if alias then return alias end
     for _, d in ipairs(D.dungeons) do
         local n = (d.name or ""):lower():gsub("^the ", ""):gsub(" %(.*%)$", "")
         if n == want or want:find(n, 1, true) or n:find(want, 1, true) then return d end
@@ -354,10 +356,17 @@ local function sheet()
 end
 
 local function tipEntries(out)
+    -- the boss card's on / off box (Sheets.lua)
+    local SH = ns.SheetCard
+    if SH then
+        local on = SH:On()
+        out[#out + 1] = { text = "Boss card when a fight starts", icon = on and "Interface\\Buttons\\UI-CheckBox-Check" or "Interface\\Buttons\\UI-CheckBox-Up",
+            r = 0.88, g = 0.88, b = 0.9, click = function() SH:Set(not SH:On()) end,
+            tip = "A small card with the boss's short version and the tip for your role pops up when a boss fight starts. Drag it anywhere." }
+    end
     local d = sheet()
     if not d then
-        out[#out + 1] = { text = VoidCheatSheetData and ("No tips for " .. J.cur.name .. " yet.")
-            or "Tips come from VoidCheatSheet: install it to see boss notes here.", r = 0.6, g = 0.6, b = 0.65, wrap = true }
+        out[#out + 1] = { text = "No tips for " .. J.cur.name .. " yet.", r = 0.6, g = 0.6, b = 0.65, wrap = true }
         return
     end
     local function add(label, s)
@@ -549,7 +558,12 @@ local function rowEnter(r)
     local e = r.e
     if not e then return end
     if e.row and ns.Canvas then ns.Canvas:Glow(e.row) end
-    if e.item then
+    if e.tip then   -- a plain explanation (the boss card box)
+        GameTooltip:SetOwner(r, "ANCHOR_LEFT")
+        GameTooltip:SetText(e.text or "", 1, 1, 1)
+        GameTooltip:AddLine(e.tip, 0.8, 0.8, 0.8, true)
+        GameTooltip:Show()
+    elseif e.item then
         GameTooltip:SetOwner(r, "ANCHOR_LEFT")
         GameTooltip:SetItemByID(e.item)
         -- soft reserve: who has it, and how to reserve it (Reserve.lua)

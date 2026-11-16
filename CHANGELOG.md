@@ -1,7 +1,9 @@
 # VoidDungeon Changelog
 
-## Unreleased
+## 0.6.0 — 2026-11-15
 
+- **Boss tips for every WoW Forever dungeon are built in** (Tips tab): the short version, abilities, and tips for tanks, healers and damage. They were VoidCheatSheet's; VoidCheatSheet is for retail now.
+- **Boss card:** when a boss fight starts, a small card shows the boss's short version and the tip for your role. Turn it off with the box at the top of the Tips tab or in the Void hub's quick switches.
 - **Now called a dungeon guide:** "VoidDungeon - Dungeon Guide, Maps & Loot" (was "Dungeon Journal"). Nothing changes in game.
 
 ## 0.5.0 — 2026-11-15
