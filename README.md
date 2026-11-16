@@ -1,8 +1,8 @@
-# VoidDungeon - Dungeon Journal, Maps & Loot
+# VoidDungeon - Dungeon Guide, Maps & Loot
 
 **Works on:** WoW Forever
 
-**The dungeon journal WoW Forever doesn't have, built into VoidMap: dungeon maps, your quests, boss loot and the way through.**
+**The dungeon guide WoW Forever doesn't have, built into VoidMap: dungeon maps, your quests, boss loot and the way through.**
 
 Open your map inside a dungeon and VoidMap shows that dungeon instead of the world: its map with every boss numbered, and beside it the dungeon's quests, loot, path and boss tips. It keeps track of which bosses you've killed this run and which one is next. Outside, you can look up any dungeon before you go.
 

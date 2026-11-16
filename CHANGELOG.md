@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## Unreleased
+
+- **Now called a dungeon guide:** "VoidDungeon - Dungeon Guide, Maps & Loot" (was "Dungeon Journal"). Nothing changes in game.
+
 ## 0.5.0 — 2026-11-15
 
 - **Krol'dok Stronghold's entrance is on the map** (Riverglades, measured by a Void player walking in).

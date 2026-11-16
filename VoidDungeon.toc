@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: |cff00c7ffVoidDungeon|r
-## Notes: The dungeon journal WoW Forever doesn't have, inside VoidMap: dungeon maps, your quests, boss loot with drop chances, the path and boss tips
+## Notes: The dungeon guide WoW Forever doesn't have, inside VoidMap: dungeon maps, your quests, boss loot with drop chances, the path and boss tips
 ## Author: Vede
 ## Version: 0.5.0
 ## Dependencies: VoidMap

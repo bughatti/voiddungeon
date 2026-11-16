@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------
--- VoidDungeon — the dungeon journal WoW Forever doesn't have, inside VoidMap.
+-- VoidDungeon — the dungeon guide WoW Forever doesn't have, inside VoidMap.
 --
 -- In a dungeon (or picked from the list) VoidMap's map area shows the dungeon's map
 -- (Atlas's maps, numbered bosses you can click) and the side area gets tabs:
