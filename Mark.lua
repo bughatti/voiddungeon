@@ -1796,7 +1796,7 @@ SlashCmdList.VOIDMARK = function(msg)
             or "swarm test mode off: a shared answer needs 3 players again.")
         return
     elseif msg:match("^swarmask ") then
-        -- test: ask one named player for a dungeon's looks ("/vmark swarmask 129 Vede Tinkerline")
+        -- test: ask one named player for a dungeon's looks ("/vmark swarmask 129 Ana Brightwood")
         local id, who = msg:match("^swarmask (%d+) (.+)$")
         local net = swarm()
         if not (id and who and net) then say("/vmark swarmask <dungeon id> <player name>"); return end

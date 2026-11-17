@@ -2,7 +2,7 @@
 ## Title: |cff00c7ffVoidDungeon|r
 ## Notes: The dungeon guide WoW Forever doesn't have, inside VoidMap: dungeon maps, your quests, boss loot with drop chances, the path and boss tips
 ## Author: Vede
-## Version: 0.6.0
+## Version: 0.6.1
 ## Dependencies: VoidMap
 ## OptionalDeps: VoidCheatSheet
 ## SavedVariables: VoidDungeonDB, VoidMarkDB
@@ -11,6 +11,10 @@
 
 VoidMove.lua
 WhisperNet.lua
+VoidNet.lua
+Layer.lua
+VoidLayerCore.lua
+LayerHelp.lua
 VoidSwarm.lua
 VoidSwarmLink.lua
 Data\Atlas.lua
