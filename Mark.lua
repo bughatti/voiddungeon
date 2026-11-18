@@ -1312,6 +1312,70 @@ apply:SetScript("PostClick", function(self)
     say(("marked %d mob%s."):format(n, n == 1 and "" or "s"))
 end)
 
+-- The big Mark button (the user, 2026-11-18: "need a better way to click the green checkmark ... almost like a
+-- seperate button attached to voidmark i can drag thats a little bigger to auto mark stuff"). Its own box, dragged
+-- anywhere and kept (VoidMove), that presses the green check: a secure "click" button (the game's own delegation,
+-- SecureTemplates SECURE_ACTIONS.click -> delegate:Click, a release, which is what the check acts on), so it marks
+-- exactly what the check would and the check's PostClick says how many. Up whenever the board is (dungeon / raid
+-- groups, unless /vmark hide). Bright with the number it will mark; dim when there's nothing to mark, and in combat
+-- (the game locks marking for addons then; the marker bar keys still work). Made once at load (secure setup).
+local go = CreateFrame("Button", "VoidMarkGo", UIParent, "SecureActionButtonTemplate,BackdropTemplate")
+VM.Go = go
+go:SetSize(72, 72)
+go:SetPoint("CENTER", UIParent, "CENTER", 300, 120)
+go:SetFrameStrata("MEDIUM")
+go:SetClampedToScreen(true)
+look(go, 0.08, 0.08, 0.13, 0.92)
+go.tex = go:CreateTexture(nil, "ARTWORK")
+go.tex:SetSize(44, 44)
+go.tex:SetPoint("TOP", 0, -6)
+go.tex:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+go.text = go:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+go.text:SetPoint("BOTTOM", 0, 6)
+go:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+go:RegisterForClicks("LeftButtonUp")   -- release only, so a drag doesn't mark (like the Mark pack button)
+go:SetAttribute("useOnKeyDown", false)
+go:SetAttribute("type", "click")
+go:SetAttribute("clickbutton", apply)
+go:Hide()
+
+-- what it shows: the number of mobs the check would mark, or why it can't
+function go:Refresh(fighting)   -- fighting: PLAYER_REGEN_DISABLED (it comes just before the lock)
+    fighting = fighting or InCombatLockdown()
+    local text = apply:GetAttribute("macrotext") or ""
+    local n = 0
+    if text ~= "" then n = select(2, text:gsub("\n", "\n")) + 1 end
+    self.n = n
+    local ready = n > 0 and not fighting
+    self.tex:SetDesaturated(not ready)
+    self.tex:SetAlpha(ready and 1 or 0.45)
+    if fighting then
+        self.text:SetText("|cff888888in combat|r")
+    elseif n > 0 then
+        self.text:SetText(("|cff33ff33Mark %d|r"):format(n))
+    else
+        self.text:SetText("|cff888888Mark|r")
+    end
+end
+apply:HookScript("OnAttributeChanged", function(_, name)
+    if name == "macrotext" then go:Refresh() end
+end)
+go:HookScript("OnShow", function(self) self:Refresh() end)
+go:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:AddLine("Mark the pack")
+    if InCombatLockdown() then
+        GameTooltip:AddLine("In combat the game locks marking for addons. The marker bar on the board (and its keys) still works; this button is ready again after the fight.", 0.8, 0.8, 0.8, true)
+    elseif (self.n or 0) > 0 then
+        GameTooltip:AddLine(("Puts the suggested markers on %d mob%s: the same as the green check on the board."):format(self.n, self.n == 1 and "" or "s"), 0.8, 0.8, 0.8, true)
+    else
+        GameTooltip:AddLine("Nothing to mark yet: look at the next pack (V shows enemy nameplates). It lights up when the board has suggestions.", 0.8, 0.8, 0.8, true)
+    end
+    GameTooltip:AddLine("Drag to move it.", 0.6, 0.6, 0.6)
+    GameTooltip:Show()
+end)
+go:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
 function board:Open()
     if InCombatLockdown() then say("in combat the game locks marking for addons: open the board before the pull."); return end
     if not canMark() then say("in a raid only the leader and assistants can mark (the game's rule)."); return end
@@ -1337,9 +1401,12 @@ function board:SetAlways(on)
     if InCombatLockdown() or not RegisterStateDriver then return false end
     if on then
         RegisterStateDriver(self, "visibility", "[group] show; hide")
+        RegisterStateDriver(go, "visibility", "[group] show; hide")   -- the big Mark button comes and goes with it
     else
         UnregisterStateDriver(self, "visibility")
+        UnregisterStateDriver(go, "visibility")
         self:Hide()
+        go:Hide()
     end
     return true
 end
@@ -1704,6 +1771,7 @@ combat:SetScript("OnEvent", function(self, event, name)
             for _, b in ipairs(row.btns) do b:SetAttribute("macrotext", "") end
         end
         board.apply:SetAttribute("macrotext", "")
+        go:Refresh(true)
         board.locked:Show()
         board.empty:Hide()   -- an empty board in combat just waits: "No mobs in view" read like a fault (the user, 11-14)
         pending = nil
@@ -1711,6 +1779,7 @@ combat:SetScript("OnEvent", function(self, event, name)
         board.locked:Hide()
         if board.syncPending then board:Sync() end
         if board:IsShown() then board:Fill() end
+        go:Refresh()
         -- a pull just ended in a dungeon (credited 1.5 s after it): what it proved goes to the swarm
         local _, kind = IsInInstance()
         if kind == "party" or kind == "raid" then C_Timer.After(4, function() pcall(swReport) end) end
@@ -1736,15 +1805,16 @@ combat:SetScript("OnEvent", function(self, event, name)
     elseif event == "ADDON_LOADED" and name == ADDON then
         if ns.Move then ns.Move(btn, { db = db, key = "button" }) end
         if ns.Move then ns.Move(board, { db = db, key = "board", handle = board.bar }) end
+        if ns.Move then ns.Move(go, { db = db, key = "goButton" }) end
         -- secure setup at load (also after a /reload in combat): up in dungeon and raid groups unless turned off
         board:SyncFade()
         board:Sync()
         -- once: picks learned before learning became opt-in were test clicks (the user, 11-14)
         if (db().learnV or 0) < 2 then db().learned, db().learnV = nil, 2 end
     elseif event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
-        look(btn); look(board)
+        look(btn); look(board); look(go)
     elseif event == "PLAYER_LOGIN" then
-        look(btn); look(board)   -- the UI scale is known now
+        look(btn); look(board); look(go)   -- the UI scale is known now
         -- the swarm: the test switch (two test PCs can't reach 3 players), then everything your pulls proved
         if db().swarmTest and VoidSwarm then VoidSwarm.testNeed = 1 end
         swarm()   -- register the dungeon-mob kind before a host appears

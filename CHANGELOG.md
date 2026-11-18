@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## 0.6.3 — 2026-11-18
+
+- **A big Mark button** (marking board): its own green check, bigger and separate from the board, that you can drag wherever your hand is. Press it between pulls to mark the whole pack, the same as the board's green check. It shows how many mobs it will mark, and greys out in combat, when the game locks marking for addons (the marker bar keys still work then). It stays where you put it.
+
 ## 0.6.2 — 2026-11-17
 
 - **Layer helping finds players faster (WoW Forever).** A layer question now reaches the Void players it asks in about a second instead of eleven, so Refresh and hops see the other layers right away. Same message rate over time, well under the game's limit.
