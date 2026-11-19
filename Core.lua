@@ -411,11 +411,62 @@ local function killed(row)
     J:Changed("live")
 end
 
+-- For the pack tracker (PackTrack.lua): this run's identity (a reset or a new dungeon = another key), and
+-- whether a boss NPC died this run (ENCOUNTER_END, its body, its plate).
+function J:RunKey()
+    local r = current()
+    return r and r.dungeon and (r.dungeon .. ":" .. tostring(r.started or 0)) or nil
+end
+function J:KilledNpc(npc)
+    local r = current()
+    return (r and npc and r.killed["n" .. npc]) and true or false
+end
+
 -- A new run on purpose (the Path tab's "Start a new run").
 function J:NewRun()
     if VoidDungeonDB and VoidDungeonDB.runs then VoidDungeonDB.runs[me()] = nil end
     run()
     self:Changed("live")
+end
+
+-- An instance reset is a new run too (the user, 2026-11-18: "we ran 1 zf, reset and are now back in there": the
+-- second run still showed the first one's 12 kills). Inside dungeons Forever hides mob GUIDs, so the instance itself
+-- can't be told apart; two things the game does say:
+--   * "Zul'Farrak has been reset." (INSTANCE_RESET_SUCCESS) to whoever reset it: that dungeon's run is over;
+--   * a boss fight starting for a boss this run already killed: a boss can't be fought twice in one instance, so
+--     this is a fresh one (catches group members who didn't see the reset message).
+local function resetPattern()
+    local f = _G.INSTANCE_RESET_SUCCESS
+    if type(f) ~= "string" or not f:find("%s", 1, true) then f = "%s has been reset." end
+    local p = f:gsub("([%%%^%$%(%)%.%[%]%*%+%-%?])", "%%%1"):gsub("%%%%s", "(.+)", 1)   -- "%s" was escaped to "%%s"
+    return "^" .. p .. "$"
+end
+local function sameDungeon(a, b)
+    a, b = (a or ""):lower():gsub("[^%w]", ""), (b or ""):lower():gsub("[^%w]", "")
+    if a == "" or b == "" then return false end
+    -- "Scarlet Monastery" reset vs the "Scarlet Monastery: Armory" run; "The Deadmines" vs "Deadmines"
+    a, b = a:gsub("^the", ""), b:gsub("^the", "")
+    return a == b or a:sub(1, #b) == b or b:sub(1, #a) == a
+end
+function J:ResetSeen(msg)
+    if type(msg) ~= "string" or secret(msg) then return false end
+    local name = msg:match(resetPattern())
+    local r = current()
+    if not (name and r and sameDungeon(name, r.dungeon)) then return false end
+    VoidDungeonDB.runs[me()] = nil
+    if J.inside then run() end
+    self:Changed("live")
+    return true
+end
+function J:FightStarted(bossName)
+    if type(bossName) ~= "string" or secret(bossName) or not J.inside then return false end
+    local row = index().byName[plain(bossName)]
+    local r = current()
+    if not (row and r and r.dungeon == J.inside.name and r.killed[keyOf(row)]) then return false end
+    VoidDungeonDB.runs[me()] = nil
+    run()
+    self:Changed("live")
+    return true
 end
 
 -- The next boss: first main boss (not rare) in path order that isn't killed.
@@ -476,10 +527,20 @@ ev:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
 ev:RegisterEvent("PLAYER_TARGET_CHANGED")
 ev:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
 ev:RegisterEvent("UNIT_HEALTH")
+ev:RegisterEvent("ENCOUNTER_START")
 ev:RegisterEvent("ENCOUNTER_END")
 ev:RegisterEvent("LOOT_OPENED")
 ev:RegisterEvent("PLAYER_ENTERING_WORLD")
+ev:RegisterEvent("CHAT_MSG_SYSTEM")
 ev:SetScript("OnEvent", function(_, event, a1, a2, _, _, a5)
+    if event == "CHAT_MSG_SYSTEM" then   -- "<dungeon> has been reset." (you reset it, usually outside)
+        J:ResetSeen(a1)
+        return
+    end
+    if event == "ENCOUNTER_START" then   -- encounterID, name: a boss this run already killed = a new instance
+        if J:FightStarted(a2) then recompute() end
+        return
+    end
     if event == "PLAYER_ENTERING_WORLD" then
         wipe(inView)
         wipe(plates)

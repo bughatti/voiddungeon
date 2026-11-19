@@ -1,5 +1,12 @@
 # VoidDungeon Changelog
 
+## 0.6.4 — 2026-11-18
+
+- **The marking board knows which pack you're at** (Classic dungeons). The game won't tell addons where you stand inside a dungeon, but after every fight it does name the mobs you fought, so VoidDungeon knows which pack that was and that the next pull is one of the packs near it you haven't cleared. A nameplate those packs all agree on gets its name: hover the row for "Probably ... (by pack)", and the green check goes on exactly that mob. Tested on 360+ recorded pulls: about 1 in 5 plates named, 94% of them right (the board alone named under 1 in 10). Packs aren't always the same, so it checks itself after every fight and stops guessing in a dungeon where its guesses don't hold up.
+- **54 dungeon mobs were missing from the marking list**, among them Zul'Farrak's Sandfury Witch Doctor (a healer), Blood Drinker and Shadowcaster: spawn spots that can be one of several mobs weren't counted. They're ranked now.
+- **A reset is a new run.** After an instance reset the dungeon map still showed the last run's bosses as killed. Now a new run starts when the game says the dungeon was reset, when a boss you killed is fought again, or when two packs you cleared are back.
+- With VoidQuest 0.3.41: the Quest Book's search finds dungeon drops too (VoidDungeon ships the item names).
+
 ## 0.6.3 — 2026-11-18
 
 - **A big Mark button** (marking board): its own green check, bigger and separate from the board, that you can drag wherever your hand is. Press it between pulls to mark the whole pack, the same as the board's green check. It shows how many mobs it will mark, and greys out in combat, when the game locks marking for addons (the marker bar keys still work then). It stays where you put it.

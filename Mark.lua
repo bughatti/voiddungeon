@@ -595,6 +595,7 @@ local function where()
     end
     return ("%s:%s"):format(tostring(readable(inst) or "?"), tostring(id or 0)), sub, id
 end
+VM.Where = where   -- PackTrack.lua: the dungeon map id
 local function looksKey(m, dl)
     return table.concat({ m.where or "?", m.sub or "", m.elite or 0, tostring(m.pt), (m.lvl or 0) + (dl or 0) }, "|")
 end
@@ -945,6 +946,9 @@ local function seedOf(m)
     local known = knownAs(m)
     local e = known and seedByName(m.inst, known)
     if e then return e[5], { e[8] .. (e[7] ~= "" and (" (" .. e[7] .. ")") or "") }, 1, known end
+    -- the pack you're at (PackTrack.lua: the nearby uncleared packs all say this mob for this plate)
+    local p = m and m.byPack and seedByName(m.inst, m.byPack)
+    if p then return p[5], { p[8] .. (p[7] ~= "" and (" (" .. p[7] .. ")") or "") }, 1, nil end
     local list = VM.Seed and m and m.inst and VM.Seed[m.inst]
     if not list or not m.lvl or m.lvl <= 0 then return nil, nil, nil, known end
     local sum, n, names = 0, 0, {}
@@ -981,6 +985,9 @@ for i = 1, ROWS do
         elseif m.known then
             GameTooltip:AddLine(("Seen in your fights here: %s"):format(m.seedNames and m.seedNames[1] or m.known), 1, 1, 1, true)
             GameTooltip:AddLine("The game names mobs to addons once a fight ends; mobs that look like this were this one.", 0.6, 0.6, 0.6, true)
+        elseif m.byPack and m.seedNames then
+            GameTooltip:AddLine(("Probably %s (by pack)"):format(m.seedNames[1]), 1, 1, 1, true)
+            GameTooltip:AddLine("From the pack you're at: your last fight showed where you are, and every uncleared pack near it that fits these nameplates has this mob.", 0.6, 0.6, 0.6, true)
         elseif m.seedNames then
             GameTooltip:AddLine(("Probably: %s%s"):format(table.concat(m.seedNames, ", "),
                 (m.seedN or 0) > #m.seedNames and (" (+%d more)"):format(m.seedN - #m.seedNames) or ""), 1, 1, 1, true)
@@ -1104,7 +1111,13 @@ end
 function VM:AutoMacro()
     if not canMark() then return nil, nil, "in a raid only the leader and assistants can mark (the game's rule)." end
     local list = {}
-    for _, m in ipairs(pack()) do
+    local plates, guess = pack(), nil
+    if VM.PackTrack then   -- which mob each plate is by the pack you're at (PackTrack.lua)
+        local ok, g = pcall(VM.PackTrack.Guess, plates)
+        guess = ok and g or nil
+    end
+    for i, m in ipairs(plates) do
+        m.byPack = guess and guess[i] or nil
         m.caster = readable(UnitPowerType(m.unit)) == 0
         m.anyType = true
         m.role = m.caster and "caster" or nil
@@ -1215,6 +1228,15 @@ function board:Fill()
         elseif p and not taken[p] then
             m.sugg, m.from, taken[p] = p, "plan", true
         end
+    end
+    -- which mob each plate is by the pack you're at (PackTrack.lua; nil before the run's first fight)
+    local guess
+    if VM.PackTrack then
+        local ok, g = pcall(VM.PackTrack.Guess, { unpack(mobs, 1, math.min(#mobs, ROWS)) })
+        guess = ok and g or nil
+    end
+    for i = 1, math.min(#mobs, ROWS) do
+        mobs[i].byPack = guess and guess[i] or nil
     end
     for i = 1, math.min(#mobs, ROWS) do
         local m = mobs[i]
@@ -1597,6 +1619,8 @@ pev:SetScript("OnEvent", function(_, event, a1, a2)
             if ok and names then
                 local okc, n = pcall(creditPull, list, names, wiped)
                 VM.lastPull = { looks = #list, enemies = #names, credited = okc and n or 0 }
+                -- which pack that was: where you are now, and that pack is cleared (PackTrack.lua)
+                if VM.PackTrack then pcall(VM.PackTrack.Seen, names, wiped, nil, list) end
                 -- the last 30 pulls, to check learning in the game (VoidMarkDB.pullStats)
                 local st = db().pullStats or {}
                 db().pullStats = st
