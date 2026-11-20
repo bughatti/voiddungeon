@@ -14,6 +14,7 @@ local VM, W
 local C = {}
 ns.Canvas = C
 local canvas, tool, mapTex, noMap, markers = nil, nil, nil, nil, {}
+local INSET = 210   -- the "You are here" minimap box (below)
 local pickBtn, mapBtns = nil, {}
 
 local function text(parent, size, flags)
@@ -186,10 +187,15 @@ function C:Refresh()
     end
     VM:SetTitleOverride(J.cur.name)
 
-    -- the picture: square, as big as the area allows, centered
+    -- the picture: square, as big as the area allows, centered. With the "You are here" minimap
+    -- showing, the picture keeps out of its column on the right (the user, 2026-11-19: "the minimap
+    -- pulled into it is covering the main map, thats needs to be fixed, its on all maps").
     local w, h = canvas:GetSize()
-    local size = math.max(64, math.min(w, h) - 8)
+    local col = C:InsetWanted() and (INSET + 16) or 0
+    local size = math.max(64, math.min(w - col, h) - 8)
     mapTex:SetSize(size, size)
+    mapTex:ClearAllPoints()
+    mapTex:SetPoint("CENTER", canvas, "CENTER", -col / 2, 0)
     if m and m.img then
         mapTex:SetTexture(J.MAPS .. key)
         mapTex:Show()
@@ -231,6 +237,8 @@ function C:Refresh()
         end
     end
     for i = n + 1, #markers do markers[i]:Hide() end
+    -- the best route (Route.lua): its line under the markers
+    if ns.Route then ns.Route:Draw(canvas, mapTex, size, key) end
 end
 
 -- Light up a row's markers (Side.lua's hover).
@@ -249,7 +257,6 @@ end
 -- closes or shows another dungeon. VoidDungeonDB.inset = false turns this off.
 ----------------------------------------------------------------------
 local inset, held = nil, nil
-local INSET = 210
 
 local function giveBack()
     if not held then return end
@@ -284,10 +291,16 @@ end
 -- Borrow while the dungeon view shows the dungeon you're in; give back otherwise.
 -- IsVisible, not IsShown: closing the map hides its parent, and the canvas still says "shown",
 -- so a later quest / item / live update would pull the minimap under the hidden map (Astra review).
+function C:InsetWanted()
+    return (J.mode and canvas and canvas:IsVisible() and J.inside and J.cur == J.inside
+        and (VoidDungeonDB and VoidDungeonDB.inset ~= false)) and true or false
+end
+local lastWant
 function C:UpdateInset()
-    local want = J.mode and canvas and canvas:IsVisible() and J.inside and J.cur == J.inside
-        and (VoidDungeonDB and VoidDungeonDB.inset ~= false)
+    local want = C:InsetWanted()
     if want then borrow() else giveBack() end
+    -- the map makes room for the box (or takes the room back) when it comes or goes
+    if want ~= lastWant then lastWant = want; C:Refresh() end
 end
 
 ----------------------------------------------------------------------

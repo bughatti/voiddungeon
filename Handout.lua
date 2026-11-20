@@ -14,6 +14,49 @@
 --
 -- Addon messages (prefix VDBOE): O|id,id,...|zone  (to GUILD: an offer)   W|id  (whisper: I want it)
 ----------------------------------------------------------------------
+-- Borders are one screen pixel (tools/cmd/pixelfix, 2026-11-09). WoW snaps each border
+-- piece to the pixel grid, and a thin line on a fractional position can snap to 0 px: a side
+-- of a box vanishes. VoidPX() asks for one real pixel, and the hook below (installed once, by
+-- the first Void addon loaded) turns snapping off on the edges of flat WHITE8X8 borders, like
+-- Blizzard's NineSliceUtil.DisableSharpening, so a 1 px line always covers a pixel. It also
+-- moves the border 1/8 px up-left: a side sitting exactly on a pixel's middle (a box centred
+-- in an odd-width window) covered no pixel and vanished (2026-11-12).
+local function VoidPX()
+    local s = UIParent and UIParent:GetEffectiveScale()
+    if s and s > 0 and PixelUtil and PixelUtil.GetPixelToUIUnitFactor then return PixelUtil.GetPixelToUIUnitFactor() / s end
+    return 1
+end
+if not _G.__VoidBorderHook2 and hooksecurefunc and NineSliceUtil and NineSliceUtil.ApplyLayout then
+    _G.__VoidBorderHook2 = true
+    local EDGES = { "TopEdge", "BottomEdge", "LeftEdge", "RightEdge",
+                    "TopLeftCorner", "TopRightCorner", "BottomLeftCorner", "BottomRightCorner" }
+    hooksecurefunc(NineSliceUtil, "ApplyLayout", function(c)
+        local i = type(c) == "table" and c.backdropInfo
+        local e = i and i.edgeFile
+        if type(e) ~= "string" or not e:lower():find("white8x8", 1, true) or (tonumber(i.edgeSize) or 0) > 3 then return end
+        for _, k in ipairs(EDGES) do
+            local t = c[k]
+            if t and t.SetSnapToPixelGrid then
+                t:SetSnapToPixelGrid(false)
+                t:SetTexelSnappingBias(0)
+            end
+        end
+        -- the corners hold the box's own points; the edges and the background hang off them
+        local sc = c.GetEffectiveScale and c:GetEffectiveScale()
+        if not (sc and sc > 0 and PixelUtil and PixelUtil.GetPixelToUIUnitFactor) then return end
+        local d = PixelUtil.GetPixelToUIUnitFactor() / sc / 8
+        for n = 5, 8 do
+            local t = c[EDGES[n]]
+            if t and t.GetNumPoints and t:GetNumPoints() == 1 then
+                local p, rel, rp, x, y = t:GetPoint(1)
+                if rel == c then
+                    t:ClearAllPoints()
+                    t:SetPoint(p, c, rp, (x or 0) - d, (y or 0) + d)
+                end
+            end
+        end
+    end)
+end
 local _, ns = ...
 local J = ns.J
 local H = {}
@@ -189,7 +232,7 @@ local function showOffer(from, ids, zone)
         f:SetSize(300, 60)
         f:SetPoint("TOP", 0, -160)
         f:SetFrameStrata("DIALOG")
-        f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
+        f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = VoidPX() })
         f:SetBackdropColor(0.07, 0.07, 0.09, 0.96)
         f:SetBackdropBorderColor(J.A[1], J.A[2], J.A[3], 0.7)
         f.title = J.text(f, 11, "OUTLINE")
@@ -446,7 +489,7 @@ local function buildMailBox()
     local f = CreateFrame("Frame", "VoidDungeonMailBoE", MailFrame, "BackdropTemplate")
     f:SetSize(260, 64)
     f:SetPoint("TOPLEFT", MailFrame, "TOPRIGHT", 6, -40)
-    f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
+    f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = VoidPX() })
     f:SetBackdropColor(0.07, 0.07, 0.09, 0.96)
     f:SetBackdropBorderColor(J.A[1], J.A[2], J.A[3], 0.7)
     local t = J.text(f, 11, "OUTLINE")

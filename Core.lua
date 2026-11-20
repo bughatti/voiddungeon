@@ -422,6 +422,18 @@ function J:KilledNpc(npc)
     return (r and npc and r.killed["n" .. npc]) and true or false
 end
 
+-- Which way this run went in (Route.lua: "Purple first"), kept with the run so a reload keeps it.
+function J:RunSide()
+    local r = current()
+    return r and self.cur and r.dungeon == self.cur.name and r.side or nil
+end
+function J:SetRunSide(side, quiet)
+    local r = run()
+    if not r or r.side == side then return end
+    r.side = side
+    if not quiet then self:Changed("live") end
+end
+
 -- A new run on purpose (the Path tab's "Start a new run").
 function J:NewRun()
     if VoidDungeonDB and VoidDungeonDB.runs then VoidDungeonDB.runs[me()] = nil end
@@ -472,6 +484,14 @@ end
 -- The next boss: first main boss (not rare) in path order that isn't killed.
 function J:NextBoss()
     if not self.cur then return nil end
+    -- a dungeon with a route: the route's next stop (its order, its side), not the map's numbering
+    local R = ns.Route
+    local rt = R and R.For(self.cur)
+    local i = rt and R.NextIndex(rt)
+    local s = i and rt.steps[i]
+    local row = s and R.RowFor(s)
+    if row then return row, s.map end
+    if rt and i and i > #rt.steps then return nil end   -- the route is done: no optional stop becomes "next" (Sol)
     for _, key in ipairs(self.cur.maps) do
         for _, r in ipairs(ns.Atlas[key].rows) do
             if r[3] == "b" and r.npc and not r.rare and not self:IsKilled(r) then return r, key end

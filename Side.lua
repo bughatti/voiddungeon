@@ -314,6 +314,8 @@ local function lootEntries(out)
 end
 
 local function pathEntries(out)
+    -- the best route first (Route.lua), then every boss in map order
+    if ns.Route and ns.Route:PathEntries(out) then out[#out + 1] = { head = "All bosses" } end
     local here = J.cur and J.cur == J.inside
     local nextRow = here and J.NextBoss and J:NextBoss() or nil
     local done = 0

@@ -1,5 +1,13 @@
 # VoidDungeon Changelog
 
+## 0.7.0 — 2026-11-19
+
+- **The best route through Maraudon on the dungeon map.** A line shows where to go (next stop yellow, the rest red, optional bosses blue, done grey) with a colour key, numbered stops, and a "Best route" list in the Path tab with tips and warnings (like Celebras's ritual). Purple side first by default: that way our group did the whole dungeon and every quest in one go.
+- **Orange side first works too.** Maraudon has a second route for groups that go in by the orange portal (Noxxion first, then through Poison Falls to Vyletongue). The map picks the side from where your group went in, or from the bosses already dead, and the Path tab says which side it's showing; click there to switch.
+- **"Next" follows the way you actually went.** A boss you killed out of the usual order now shows as done, and the yellow "next" glow on the map follows the route instead of the map's numbers (no optional boss turns "next" after the last main one).
+- **The "You are here" box no longer covers the map.** While it shows, the dungeon map shrinks beside it instead of sitting under it, on every map.
+- Thin borders on the Reserve and BoE windows never lose a side.
+
 ## 0.6.4 — 2026-11-18
 
 - **The marking board knows which pack you're at** (Classic dungeons). The game won't tell addons where you stand inside a dungeon, but after every fight it does name the mobs you fought, so VoidDungeon knows which pack that was and that the next pull is one of the packs near it you haven't cleared. A nameplate those packs all agree on gets its name: hover the row for "Probably ... (by pack)", and the green check goes on exactly that mob. Tested on 360+ recorded pulls: about 1 in 5 plates named, 94% of them right (the board alone named under 1 in 10). Packs aren't always the same, so it checks itself after every fight and stops guessing in a dungeon where its guesses don't hold up.
