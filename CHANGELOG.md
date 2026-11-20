@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## 0.7.1 — 2026-11-20
+
+- **More dungeon loot and quests (WoW Forever).** Boss loot and dungeon quests now come from WoW Forever's newest data (the loot list nearly doubled), and the marking board knows more mobs proven by real fights.
+
 ## 0.7.0 — 2026-11-19
 
 - **The best route through Maraudon on the dungeon map.** A line shows where to go (next stop yellow, the rest red, optional bosses blue, done grey) with a colour key, numbered stops, and a "Best route" list in the Path tab with tips and warnings (like Celebras's ritual). Purple side first by default: that way our group did the whole dungeon and every quest in one go.
