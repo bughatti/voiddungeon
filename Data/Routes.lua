@@ -35,4 +35,12 @@ ns.Routes = {
       },
     },
   },
+  ["Alcaz Prison"] = { mapID = 2994, steps = {
+    { map = "VD_AlcazPrison", label = "Tidemistress Ca'zass", x = 0, y = 0, note = "The naga at the front (Strashaz Soldiers and Enchantresses) lead to her. Order from one run (2026-11-20).", npc = 255997 },
+    { map = "VD_AlcazPrison", label = "Overseer Wrex", x = 0, y = 0, note = "Past the naga: Defias Bounty Hunters, Alcaz Jailers and Slavering Hounds. The Bounty Hunters run away at low health: stop them before they bring more.", npc = 255391 },
+    { map = "VD_AlcazPrison", label = "Katerina the Cleaner", x = 0, y = 0, note = "Through the door into Maximum Security. Her pack has Renegade Conjurers with Arcane or Molten Servitors.", npc = 257016 },
+    { map = "VD_AlcazPrison", label = "Blazeroar", x = 0, y = 0, note = "The fight starts against Zarla Ober, who turns into the drake. Before you leave Maximum Security, take The Man in the Iron Chains from the prisoner here.", npc = 255702 },
+    { map = "VD_AlcazPrison", label = "The Questioner", x = 0, y = 0, note = "Just outside Maximum Security, back in the main hall. Drops the Ornate Shackle Key: bring it back to the prisoner in Maximum Security, then open the Document Box there (More Valuable Than Gold). Whether the key drops without the quest is unconfirmed.", npc = 256236 },
+    },
+  },
 }

@@ -2,7 +2,7 @@
 ## Title: |cff00c7ffVoidDungeon|r
 ## Notes: The dungeon guide WoW Forever doesn't have, inside VoidMap: dungeon maps, your quests, boss loot with drop chances, the path and boss tips
 ## Author: Vede
-## Version: 0.7.2
+## Version: 0.7.3
 ## Dependencies: VoidMap
 ## OptionalDeps: VoidCheatSheet
 ## SavedVariables: VoidDungeonDB, VoidMarkDB

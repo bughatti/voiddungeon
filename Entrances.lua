@@ -416,7 +416,11 @@ local summonedAt
 local leaving   -- the walk-in spot as it was when the loading screen began (or false)
 
 local function sample()
-    if IsInInstance() or (UnitOnTaxi and UnitOnTaxi("player")) then wipe(samples) return end
+    if UnitOnTaxi and UnitOnTaxi("player") then wipe(samples) return end
+    -- Alcaz Prison 2026-11-20 (measured, VoidDev dungeon log): the game already says "in a dungeon"
+    -- a moment before the loading screen, while you still stand outside. Keep the outdoor positions
+    -- taken so far (zonedIn wipes them; FRESH keeps them from going stale) instead of dropping them.
+    if IsInInstance() then return end
     local map = C_Map.GetBestMapForUnit("player")
     if not map or secret(map) then return end
     local pos = C_Map.GetPlayerMapPosition(map, "player")
@@ -473,7 +477,9 @@ ev:SetScript("OnEvent", function(_, event, isLogin, isReload)
         C_Timer.NewTicker(120, function() pcall(L.Apply, L) end)
         C_Timer.After(5, function() pcall(L.Apply, L) end)
     elseif event == "PLAYER_LEAVING_WORLD" then
-        leaving = (not IsInInstance()) and walkedIn() or false
+        -- samples are outdoor positions only (sample() takes none inside), so no IsInInstance() check
+        -- here: it can already be true on the outdoor side (Alcaz Prison); leaving a dungeon finds none
+        leaving = walkedIn() or false
     elseif event == "CONFIRM_SUMMON" then
         summonedAt = GetTime()
     elseif event == "PLAYER_ENTERING_WORLD" then

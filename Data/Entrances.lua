@@ -26,6 +26,7 @@ ns.Entrances = {
   { name = "Krol'dok Stronghold", dungeon = "Krol'dok Stronghold", min = 40, max = 45, size = 5, at = { {2548,0.3746,0.3723} }, measured = true },
   { name = "Zul'Farrak", dungeon = "Zul'Farrak", min = 43, max = 50, size = 5, at = { {1446,0.3870,0.2010} } },
   { name = "Maraudon", dungeon = "Maraudon", min = 45, max = 52, size = 5, at = { {1443,0.2910,0.6250} } },
+  { name = "Alcaz Prison", dungeon = "Alcaz Prison", min = 48, max = 53, size = 5, at = { {1445,0.7530,0.1410} }, measured = true },
   { name = "Sunken Temple", dungeon = "Sunken Temple", min = 49, max = 56, size = 5, at = { {1435,0.6990,0.5350} } },
   { name = "Blackrock Depths", dungeon = "Blackrock Depths", min = 52, max = 60, size = 5, at = { {1427,0.3480,0.8530},{1428,0.2940,0.3830} } },
   { name = "Dire Maul (East)", dungeon = "Dire Maul (East)", min = 55, max = 60, size = 5, at = { {1444,0.6250,0.2490},{1444,0.5920,0.4510} } },
@@ -45,7 +46,6 @@ ns.Entrances = {
 }
 -- no entrance spot in the data yet (VoidDungeon learns them from players walking in):
 ns.EntrancesUnknown = {
-  { name = "Alcaz Prison", dungeon = "Alcaz Prison", min = 48, max = 53, size = 5 },
   { name = "Barrow Deeps", dungeon = nil, min = 0, max = 0, size = 0 },
   { name = "Blackmaw Hold", dungeon = "Blackmaw Hold", min = 55, max = 60, size = 5 },
   { name = "Mount Hyjal", dungeon = nil, min = 0, max = 0, size = 0 },

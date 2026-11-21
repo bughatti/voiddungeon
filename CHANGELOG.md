@@ -1,5 +1,11 @@
 # VoidDungeon Changelog
 
+## 0.7.3 — 2026-11-20
+
+- **Alcaz Prison: boss order and notes (WoW Forever).** The Path tab and the next-boss card now follow the order that works with the quests: Tidemistress Ca'zass, Overseer Wrex, Katerina the Cleaner, Blazeroar, then The Questioner on the way back. You only get the prisoner's quest in Maximum Security, and its key drops from The Questioner. Each boss has a short note. This order comes from one run, so tell us if your group finds a better one.
+- **Alcaz Prison's entrance on the map (WoW Forever).** It's on Alcaz Island in Dustwallow Marsh, measured where a player walked in.
+- **Fixed: some entrances weren't learned when you walked in.** On the new Forever dungeons the game already counts you as inside a moment before the loading screen, so the walk-in was thrown away. Blackmaw Hold and Shaper's Terrace are still being learned this way.
+
 ## 0.7.2 — 2026-11-20
 
 - **Quest objects on the dungeon map (WoW Forever).** While the quest is in your log, small lettered dots show where its objects are: The Talisman of Kazdor in Zul'Farrak gets all seven (the two Clay Vessels, both satchels, the Shallow Grave, the Sandfury Cache, the War Chest). Hover a dot for what it gives and how to get it. Green = a player found it there, yellow = about here.
