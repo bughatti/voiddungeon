@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## 0.7.4 — 2026-11-21
+
+- **Smaller dungeon entrances on the map.** About half the size, like a quest helper's marks, so they don't cover the map.
+
 ## 0.7.3 — 2026-11-20
 
 - **Alcaz Prison: boss order and notes (WoW Forever).** The Path tab and the next-boss card now follow the order that works with the quests: Tidemistress Ca'zass, Overseer Wrex, Katerina the Cleaner, Blazeroar, then The Questioner on the way back. You only get the prisoner's quest in Maximum Security, and its key drops from The Questioner. Each boss has a short note. This order comes from one run, so tell us if your group finds a better one.

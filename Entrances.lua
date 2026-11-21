@@ -23,7 +23,7 @@ ns.EntranceIcons = E
 
 local W, canvas
 local icons = {}
-local ICON = 26
+local ICON = 14   -- small, like a quest helper's marks (the user, 2026-11-21: "our dungeon entrances are huge"; was 26)
 
 local MAPTYPE_ZONE = Enum and Enum.UIMapType and Enum.UIMapType.Zone or 3
 local MAPTYPE_CONTINENT = Enum and Enum.UIMapType and Enum.UIMapType.Continent or 2
@@ -164,20 +164,20 @@ local function icon(i)
     b.ring:AddMaskTexture(mask)
     local inner = b:CreateMaskTexture()
     inner:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    inner:SetPoint("TOPLEFT", 2, -2); inner:SetPoint("BOTTOMRIGHT", -2, 2)
+    inner:SetPoint("TOPLEFT", 1.5, -1.5); inner:SetPoint("BOTTOMRIGHT", -1.5, 1.5)
     b.disc = b:CreateTexture(nil, "BACKGROUND", nil, 2)
-    b.disc:SetPoint("TOPLEFT", 2, -2); b.disc:SetPoint("BOTTOMRIGHT", -2, 2)
+    b.disc:SetPoint("TOPLEFT", 1.5, -1.5); b.disc:SetPoint("BOTTOMRIGHT", -1.5, 1.5)
     b.disc:SetColorTexture(0.05, 0.05, 0.07, 0.92)
     b.disc:AddMaskTexture(inner)
     b.tex = b:CreateTexture(nil, "ARTWORK")
-    b.tex:SetPoint("TOPLEFT", 3, -3); b.tex:SetPoint("BOTTOMRIGHT", -3, 3)
+    b.tex:SetPoint("TOPLEFT", 2, -2); b.tex:SetPoint("BOTTOMRIGHT", -2, 2)
     b.hl = b:CreateTexture(nil, "HIGHLIGHT")
     b.hl:SetAllPoints()
     b.hl:SetColorTexture(1, 1, 1, 0.18)
     b.hl:AddMaskTexture(mask)
     b.count = b:CreateFontString(nil, "OVERLAY")
-    b.count:SetFont(J.FONT, 10, "OUTLINE")
-    b.count:SetPoint("BOTTOMRIGHT", 3, -2)
+    b.count:SetFont(J.FONT, 8, "OUTLINE")
+    b.count:SetPoint("BOTTOMRIGHT", 4, -3)
     b:SetScript("OnClick", function(self, button)
         local spot = self.spot
         if not spot then return end
