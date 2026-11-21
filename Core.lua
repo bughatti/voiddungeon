@@ -163,6 +163,23 @@ function J:EntranceOf(name)
     end
 end
 
+-- the dungeon a quest's work is in (Data/Quests.lua), or nil: for VoidGPS, so a quest whose objective is inside a
+-- dungeon sends you to its entrance (the user, 2026-11-20, The Talisman of Kazdor: "i dont really see any real data
+-- about it other than what it says"). Scarlet Monastery's wings share their quests: the first wing found.
+local questDungeon
+function J:DungeonOfQuest(qid)
+    if not qid then return nil end
+    if not questDungeon then
+        questDungeon = {}
+        for name, list in pairs(ns.DQ or {}) do
+            for _, q in ipairs(list) do
+                if not questDungeon[q] or name < questDungeon[q] then questDungeon[q] = name end
+            end
+        end
+    end
+    return questDungeon[qid]
+end
+
 function J:DropsOf(item)
     if not dropIndex then
         dropIndex = {}

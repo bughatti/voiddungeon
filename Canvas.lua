@@ -111,6 +111,44 @@ end
 ----------------------------------------------------------------------
 -- The map and its markers
 ----------------------------------------------------------------------
+-- Quest objects (Data/QuestSpots.lua): small lettered dots, a third of a boss marker (the user, 2026-11-20: "why cant
+-- we put dots on it for the items" ... "smaller dots though"). Green = a player found it there, gold = about here.
+local qdots = {}
+local function qdot(i)
+    local d = qdots[i]
+    if d then return d end
+    d = CreateFrame("Button", nil, canvas)
+    d:SetSize(10, 10)
+    d:SetFrameLevel(canvas:GetFrameLevel() + 6)
+    d.dot = d:CreateTexture(nil, "OVERLAY")
+    d.dot:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
+    d.dot:SetAllPoints()
+    d.ring = d:CreateTexture(nil, "ARTWORK")
+    d.ring:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
+    d.ring:SetPoint("CENTER")
+    d.ring:SetSize(13, 13)
+    d.ring:SetVertexColor(0, 0, 0, 0.85)
+    d.label = d:CreateFontString(nil, "OVERLAY")
+    d.label:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
+    d.label:SetPoint("LEFT", d, "RIGHT", 1, 0)
+    d:SetScript("OnEnter", function(self)
+        local q = self.spot
+        if not q then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(q.label .. ") " .. q.name, 1, 1, 1)
+        if q.gives then GameTooltip:AddLine("Gives: " .. q.gives, 1, 0.82, 0) end
+        if q.note then GameTooltip:AddLine(q.note, 0.85, 0.85, 0.85, true) end
+        local qt = C_QuestLog and C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(q.quest)
+        if qt then GameTooltip:AddLine("Quest: " .. qt, 0.5, 0.8, 1) end
+        GameTooltip:AddLine(q.sure and "A player found it here." or "About here: not confirmed yet.",
+            q.sure and 0.4 or 0.6, q.sure and 1 or 0.6, q.sure and 0.4 or 0.6)
+        GameTooltip:Show()
+    end)
+    d:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    qdots[i] = d
+    return d
+end
+
 local function marker(i)
     local m = markers[i]
     if m then return m end
@@ -237,6 +275,27 @@ function C:Refresh()
         end
     end
     for i = n + 1, #markers do markers[i]:Hide() end
+    -- quest objects for the quests in your log (Data/QuestSpots.lua)
+    local qn = 0
+    local qs = m and m.img and ns.QuestSpots and ns.QuestSpots[key]
+    if qs then
+        local scale = size / 512
+        for _, q in ipairs(qs) do
+            local ok, inLog = pcall(C_QuestLog.GetLogIndexForQuestID, q.quest)
+            if ok and inLog then
+                qn = qn + 1
+                local d = qdot(qn)
+                d.spot = q
+                d:ClearAllPoints()
+                d:SetPoint("CENTER", mapTex, "TOPLEFT", q.x * scale, -q.y * scale)
+                if q.sure then d.dot:SetVertexColor(0.35, 1, 0.35) else d.dot:SetVertexColor(1, 0.82, 0) end
+                d.label:SetText(q.label)
+                d.label:SetTextColor(1, 1, 1)
+                d:Show()
+            end
+        end
+    end
+    for i = qn + 1, #qdots do qdots[i]:Hide() end
     -- the best route (Route.lua): its line under the markers
     if ns.Route then ns.Route:Draw(canvas, mapTex, size, key) end
 end

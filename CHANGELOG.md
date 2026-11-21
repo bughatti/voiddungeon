@@ -1,5 +1,12 @@
 # VoidDungeon Changelog
 
+## 0.7.2 — 2026-11-20
+
+- **Quest objects on the dungeon map (WoW Forever).** While the quest is in your log, small lettered dots show where its objects are: The Talisman of Kazdor in Zul'Farrak gets all seven (the two Clay Vessels, both satchels, the Shallow Grave, the Sandfury Cache, the War Chest). Hover a dot for what it gives and how to get it. Green = a player found it there, yellow = about here.
+- **Fixed: 5 Alliance-only quests showed to the Horde** in the Quests tab (Tabetha's Task, Journey to the Marsh, Cenarion Aid, A Simple Request, The Hunter's Charm).
+- **Zul'Farrak's numbers on the map.** The bosses and spots printed on the Zul'Farrak map now have their markers too.
+- **More quests in the Quests tab (WoW Forever).** A quest belongs to a dungeon when what it asks for comes only from a chest or other object inside it, even when the game files it elsewhere: The Talisman of Kazdor (rogues) is now on Zul'Farrak's list, with Rituals of Power in Scarlet Monastery and more.
+
 ## 0.7.1 — 2026-11-20
 
 - **More dungeon loot and quests (WoW Forever).** Boss loot and dungeon quests now come from WoW Forever's newest data (the loot list nearly doubled), and the marking board knows more mobs proven by real fights.
