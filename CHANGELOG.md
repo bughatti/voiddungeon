@@ -1,5 +1,10 @@
 # VoidDungeon Changelog
 
+## 0.7.5 — 2026-11-21
+
+- **Sunken Temple: boss order and notes (WoW Forever).** The Path tab and the next-boss card follow the order from a clean run: Atal'alarion (click the statues around the altar in the map's order), the six troll guards on the balconies that drop Jammal'an's shield, the Avatar of Hakkar for the egg quest (optional: how the summoning goes), Jammal'an and Ogom, Dreamscythe and Weaver, Morphaz and Hazzas, and the Shade of Eranikus.
+- **Layer hopping:** only layers a Void player can bring you to are offered (the same change as VoidLayer 0.5.2).
+
 ## 0.7.4 — 2026-11-21
 
 - **Smaller dungeon entrances on the map.** About half the size, like a quest helper's marks, so they don't cover the map.

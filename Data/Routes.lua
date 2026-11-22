@@ -43,4 +43,15 @@ ns.Routes = {
     { map = "VD_AlcazPrison", label = "The Questioner", x = 0, y = 0, note = "Just outside Maximum Security, back in the main hall. Drops the Ornate Shackle Key: bring it back to the prisoner in Maximum Security, then open the Document Box there (More Valuable Than Gold). Whether the key drops without the quest is unconfirmed.", npc = 256236 },
     },
   },
+  ["Sunken Temple"] = { mapID = 109, steps = {
+    { map = "CL_TheSunkenTemple", label = "Atal'alarion", x = 0, y = 0, note = "Down to the Pit of Refuse at the bottom. Click the serpent statues around the Altar of Hakkar in the order the map shows (1' to 6'): he rises from the altar. Order from one run (2026-11-21).", npc = 8580 },
+    { map = "CL_TheSunkenTemple", label = "The troll guards on the balconies", x = 0, y = 0, note = "Up in the Hall of the Cursed, each balcony over the Pit of Sacrifice has a named troll (ours: Loro, Hukku with his demons, Gasher, Zolo, Zul'Lor; six in all). Killing them drops Jammal'an's shield: he yells \"The shield be down!\" after the last. On the way, Atal'ai Witch Doctors run when hurt (stop them) and Unliving Atal'ai enrage." },
+    { map = "CL_TheSunkenTemple", label = "Avatar of Hakkar", x = 0, y = 0, note = "Only with the Egg of Hakkar quest. In the Sanctum of the Fallen God, use the egg to start (Awaken the Soulflayer). Hakkari Bloodkeepers drop blood: use it on the Eternal Flames. Nightmare Suppressors come to stop the summoning and cast a counterspell: kill them first. Ours took 5 min. After the kill, fill the egg for the quest.", opt = true, npc = 8443 },
+    { map = "CL_TheSunkenTemple", label = "Jammal'an the Prophet", x = 0, y = 0, note = "Through the Lair of the Chosen: Atal'ai Deathwalkers, Corpse Eaters and High Priests (they run when hurt). Ogom the Wretched fights with him. His shield is gone once the six balcony trolls are dead.", npc = 5710 },
+    { map = "CL_TheSunkenTemple", label = "Dreamscythe", x = 0, y = 0, note = "A green drake who came to us in the Pit of Sacrifice a minute after Jammal'an.", npc = 5721 },
+    { map = "CL_TheSunkenTemple", label = "Weaver", x = 0, y = 0, note = "The second drake, right after Dreamscythe (ours came 30 s later).", npc = 5720 },
+    { map = "CL_TheSunkenTemple", label = "Morphaz and Hazzas", x = 0, y = 0, note = "Past the Nightmare dragonkin (Wyrmkin, Scalebane, Wanderers, whelps). We fought both drakes in one pull.", npc = 5719 },
+    { map = "CL_TheSunkenTemple", label = "Shade of Eranikus", x = 0, y = 0, note = "In the Chamber of the Dreamer, just past Morphaz and Hazzas. The last boss.", npc = 5709 },
+    },
+  },
 }
