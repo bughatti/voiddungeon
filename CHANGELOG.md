@@ -1,5 +1,10 @@
 # VoidDungeon Changelog
 
+## 0.8.1 — 2026-11-23
+
+- **Better pack guesses in dungeons with look-alike packs (WoW Forever).** In Sunken Temple the same troll packs stand on every side of the ring, and the marking board could guess the mobs of the wrong side ("Probably Nightmare Wyrmkin" on a troll). When several spots fit your last fight, it now names a mob only when all of them agree. Measured on 400 recorded pulls: 84% of its guesses right instead of 80%, with fewer guesses where it can't be sure.
+- **No more run reset in the middle of a dungeon.** Two fights in a row with packs cleared minutes earlier (Sunken Temple's pit) could look like a fresh instance and clear your boss ticks. A fresh instance now needs packs cleared at least 10 minutes before.
+
 ## 0.8.0 — 2026-11-23
 
 - **Where each quest starts, also inside the dungeon (WoW Forever).** A quest given inside names the dungeon and the nearest number on its map ("inside Blackrock Depths: next to 18 Summoner's Tomb"), and an item that starts a quest says which boss or mob drops it and where. Places outside name the zone they're really in.

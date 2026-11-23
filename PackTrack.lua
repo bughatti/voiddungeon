@@ -16,6 +16,9 @@
 --     anywhere that fits casts doubt too. Replayed on 158 recorded pulls (tools/cmd/vdungeon-packs): names 27% of
 --     the plates in the fight (the board alone: 9%), 93% of them right.
 -- The board (Mark.lua) then ranks that row as that mob: "Probably X (by pack)".
+-- 2026-11-23 (replay of 400 pulls, almost all Sunken Temple + Maraudon: 80% right): a fight that several uncleared packs
+-- fit about as well keeps them all as possible spots (s.alt) and a plate is named only when every spot agrees (84%);
+-- a "fresh instance" needs re-fought packs cleared 10+ minutes before (the pit's look-alikes reset a run mid-dungeon).
 ----------------------------------------------------------------------
 if (select(4, GetBuildInfo()) or 0) >= 100000 then return end   -- WoW Forever (Classic dungeons) only
 
@@ -24,6 +27,11 @@ local PT = {}
 VM.PackTrack = PT
 
 local K, REACH, PAIR, CLEARED_COST = 3, 80, 60, 10000
+-- how much farther (yards from the last spot) another pack that fits the fight may be and still count as where you
+-- might be (see Seen; tuned on the replay, tools/cmd/vpacktrack-test)
+PT.AMBIG = 80
+-- a pack fought again counts toward "a fresh instance" only when it was cleared at least this long ago (seconds)
+local FRESH_AFTER = 600
 
 -- the book of one map, built once: packs { i, x, y, z, members = { [name] = count }, boss = { npc, ... } }
 local books = {}
@@ -208,6 +216,19 @@ function PT.Seen(names, wiped, map, fought)
     if c then
         if best then c.hit = c.hit + 1 else c.miss = c.miss + 1 end
     end
+    -- Where else could this fight have been? (2026-11-23: Sunken Temple's ring repeats the same troll packs on every
+    -- side, so "the nearest one that fits" put the group on the wrong side and every guess after it came from the
+    -- wrong neighbours: 80% right on 221 recorded pulls.) Every other uncleared pack that fits the fight about as well
+    -- (within PT.AMBIG yards of the best) stays a possible spot; Guess names a plate only when ALL of them agree.
+    local alt
+    if best and #best == 1 and at then   -- (the first fight of a run has no spot to measure from: as before)
+        for _, a in ipairs(cands) do
+            if a ~= best[1] and covers(a) and not isCleared(s, a) and cost(a) <= bestCost + PT.AMBIG then
+                alt = alt or {}
+                alt[#alt + 1] = a.i
+            end
+        end
+    end
     if not best then
         s.again, s.againAt, s.againPacks = 0, nil, nil   -- the streak needs fights in a row (Sol)
         return nil
@@ -218,7 +239,11 @@ function PT.Seen(names, wiped, map, fought)
     -- fight could tell). The identifying above prefers uncleared packs, so this only happens when none fits.
     local again = not wiped
     for _, pk in ipairs(best) do
-        if pk.boss or not s.cleared[pk.i] then again = false end
+        -- and cleared a while ago: after a reset you re-fight packs from the start of the last run; in Sunken Temple's
+        -- pit, packs cleared minutes ago matched twice in a row (near-identical small packs, adds) and a run reset
+        -- mid-dungeon (replay 11-21 19:22, 2026-11-23). An old "true" (no time) counts as long ago.
+        local when = s.cleared[pk.i]
+        if pk.boss or not when or (type(when) == "number" and (time and time() or 0) - when < FRESH_AFTER) then again = false end
     end
     if again and s.againAt ~= best[1].i then
         s.again, s.againAt = (s.again or 0) + 1, best[1].i
@@ -232,13 +257,14 @@ function PT.Seen(names, wiped, map, fought)
         J:NewRun()            -- VoidDungeon's run (its boss kills) starts over: a new key
         local earlier = s.againPacks or {}
         s = state(map) or s   -- and so does this one
-        for _, i in ipairs(earlier) do s.cleared[i] = true end   -- the first re-fought pack is cleared in the new run too (Sol)
+        for _, i in ipairs(earlier) do s.cleared[i] = time and time() or true end   -- the first re-fought pack is cleared in the new run too (Sol)
         J:Print("this looks like a fresh instance (packs you cleared are back): started a new run.")
     end
     for _, pk in ipairs(best) do
-        if not wiped and not pk.boss then s.cleared[pk.i] = true end
+        if not wiped and not pk.boss then s.cleared[pk.i] = time and time() or true end   -- when (see again above)
         s.at = pk.i
     end
+    s.alt = alt   -- the other spots it could have been (nil = only one)
     s.t = time and time() or 0
     return best
 end
@@ -270,6 +296,8 @@ function PT.Guess(looks, map)
         if type(L.lvl) == "number" and L.lvl > 5 and L.pt ~= nil and L.elite ~= nil then usable[#usable + 1] = i end
     end
     if #usable == 0 then return nil end
+    -- the guess from one spot (the rules below); run for every spot the last fight could have been (s.alt)
+    local function from(at)
     local cands = {}
     for _, pk in ipairs(b.packs) do
         -- an uncleared boss counts from anywhere (a group can run or swim past trash)
@@ -346,7 +374,7 @@ function PT.Guess(looks, map)
             for nm in pairs(set) do only, c = nm, c + 1 end
             if c == 1 then names[i], any = only, true end
         end
-        return remember(any and names or nil), nil
+        return any and names or nil, nil
     end
     local names = {}
     for i, set in pairs(agree) do
@@ -354,6 +382,20 @@ function PT.Guess(looks, map)
         for nm in pairs(set) do only, count = nm, count + 1 end
         if count == 1 then names[i] = only end
     end
+    return names, first
+    end
+    local names, first = from(at)
+    -- the other spots the last fight could have been: a plate keeps its name only when every spot says the same
+    for _, i in ipairs(s.alt or {}) do
+        local spot = b.packs[i]
+        if spot and names then
+            local other = from(spot)
+            for k, nm in pairs(names) do
+                if not (other and other[k] == nm) then names[k] = nil end
+            end
+        end
+    end
+    if names and next(names) == nil and not first then names = nil end
     return remember(names), first
 end
 
