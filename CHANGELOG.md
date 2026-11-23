@@ -1,5 +1,14 @@
 # VoidDungeon Changelog
 
+## 0.8.0 — 2026-11-23
+
+- **Where each quest starts, also inside the dungeon (WoW Forever).** A quest given inside names the dungeon and the nearest number on its map ("inside Blackrock Depths: next to 18 Summoner's Tomb"), and an item that starts a quest says which boss or mob drops it and where. Places outside name the zone they're really in.
+- **What you can do right now comes first.** Quests you can start now are at the top with "start now"; the rest say what's missing: a level, the quests before them, a profession skill ("Needs Mining 230, you have 167"), or an item you must carry.
+- **The right version of a quest.** Where a quest comes in two versions (A Taste of Flame), the one you can take now is shown, not the one behind a 10-quest chain.
+- **Libram quests:** Mathredis Firestar and Lorekeeper Lydros only offer them while you carry that Libram, so they now say "Only while you carry a Libram of ..." instead of "Get it".
+- **Bring, turn in, breadcrumbs:** what to bring (The Spectral Chalice: Star Ruby, Gold Bar, Truesilver Bar), where you hand it in, and "Optional: it only sends you to ..." for a quest you can skip.
+- **Dungeon map numbers:** hovering a number lists who else stands there and the quests that point to it; hovering a quest lights up all its spots.
+
 ## 0.7.5 — 2026-11-21
 
 - **Sunken Temple: boss order and notes (WoW Forever).** The Path tab and the next-boss card follow the order from a clean run: Atal'alarion (click the statues around the altar in the map's order), the six troll guards on the balconies that drop Jammal'an's shield, the Avatar of Hakkar for the egg quest (optional: how the summoning goes), Jammal'an and Ogom, Dreamscythe and Weaver, Morphaz and Hazzas, and the Shade of Eranikus.

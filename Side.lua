@@ -50,6 +50,284 @@ local function startText(s)
     return (s[3] ~= "" and s[3] or "?") .. (mi and (", " .. mi.name) or "")
 end
 
+----------------------------------------------------------------------
+-- Quest <-> map number (the user, 2026-11-22, in Blackrock Mountain: "look at my map ... explain how i am suppose
+-- to figure this out": the map has numbers, the list has quests, nothing tied them together).
+-- spotIndex: every NPC / name on this dungeon's maps -> the numbered spot it's at. A row listed under a number
+-- (kind "i": Mistress Nagmara, Private Rocknot, Ribbly Screwspigot under 15) has that number's spot.
+----------------------------------------------------------------------
+local function plainName(s)
+    return (s or ""):lower():gsub("%s*%b()", ""):gsub("^%s+", ""):gsub("%s+$", "")
+end
+
+local idx   -- { byNpc = {}, byName = {}, key = J.cur .. J.map }: rebuilt when the dungeon or map changes
+local function spotIndex()
+    local key = tostring(J.cur) .. "|" .. tostring(J.map)
+    if idx and idx.key == key then return idx end
+    idx = { byNpc = {}, byName = {}, key = key }
+    -- the map shown first: a boss on two maps (entrance + inside) is named by the one you're looking at
+    local order = {}
+    if J.map then order[1] = J.map end
+    for _, k in ipairs(J.cur and J.cur.maps or {}) do if k ~= J.map then order[#order + 1] = k end end
+    for _, k in ipairs(order) do
+        local m = ns.Atlas[k]
+        local anchor
+        for _, r in ipairs(m and m.rows or {}) do
+            if r[1] ~= "" then anchor = r elseif r[3] ~= "i" then anchor = nil end
+            local a = r[1] ~= "" and r or anchor
+            if a then
+                local rec = { row = a, map = k, who = r }
+                if r.npc and not idx.byNpc[r.npc] then idx.byNpc[r.npc] = rec end
+                local n = plainName(r[2])
+                if n ~= "" and not idx.byName[n] then idx.byName[n] = rec end
+            end
+        end
+    end
+    return idx
+end
+
+-- "24", or "Entrance 3" for a spot on another of this dungeon's maps
+local function spotLabel(rec)
+    if rec.map == J.map then return rec.row[1] end
+    local z = ns.Atlas[rec.map] and ns.Atlas[rec.map].zone or ""
+    local where = rec.map:find("Ent$") and "Entrance" or (z:match("Map([A-C])$") and ("Map " .. z:match("Map([A-C])$"))) or "Inside"
+    return where .. " " .. rec.row[1]
+end
+
+local nearRec   -- (s): the numbered row a giver not on the legend stands next to; set below whereText's helpers
+local function isCurMap(key)
+    for _, k in ipairs(J.cur and J.cur.maps or {}) do if k == key then return true end end
+    return false
+end
+
+local ROLE = { g = "gives it", e = "takes it back", eo = "takes it back", d = "drops it", ["do"] = "loot it",
+    o = "use it", k = "", t = "" }
+
+-- The spots a quest points at, map order: { { rec, roles = { "gives it", ... } }, ... }. From the giver, the quest's
+-- targets (Data/Quests.lua QT) and, for a quest in your log, its objective text (a name on the map in it).
+local function questSpots(qid, objectives)
+    local I = spotIndex()
+    local byRow, out = {}, {}
+    local function add(rec, role)
+        if not rec then return end
+        local s = byRow[rec.row]
+        if not s then
+            s = { rec = rec, roles = {}, has = {} }
+            byRow[rec.row] = s
+            out[#out + 1] = s
+        end
+        local r = ROLE[role] or ""
+        if r ~= "" and not s.has[r] then s.has[r] = true; s.roles[#s.roles + 1] = r end
+    end
+    local q = ns.QI and ns.QI[qid]
+    local st = q and q[6]
+    local gave
+    if st and st[1] == "n" then gave = I.byNpc[st[2]] or I.byName[plainName(st[3])]; add(gave, "g")
+    elseif st and st[1] == "o" then gave = I.byName[plainName(st[3])]; add(gave, "g")
+    elseif st and st[1] == "i" and st[3] ~= "" then gave = I.byName[plainName(st[3])]; add(gave, "d") end   -- the mob that drops its starting item (Sol)
+    -- not on the legend: the number it stands next to, on this dungeon's maps (the Spectral Chalice: 18)
+    if st and not gave then
+        local nr = nearRec(st)
+        if nr and isCurMap(nr.map) then add(nr, st[1] == "i" and "d" or "g") end
+    end
+    for _, t in ipairs(ns.QT and ns.QT[qid] or {}) do
+        local isNpc = t[1] == "k" or t[1] == "d" or t[1] == "e"
+        local rec = (isNpc and I.byNpc[t[2]]) or I.byName[plainName(t[3])]
+        -- handed back to the same thing it started from (the Spectral Chalice): its number too
+        if not rec and st and t[2] == st[2] and ((t[1] == "e" and st[1] == "n") or (t[1] == "eo" and st[1] == "o")) then
+            local nr = nearRec(st)
+            if nr and isCurMap(nr.map) then rec = nr end
+        end
+        add(rec, t[1])
+    end
+    for _, o in ipairs(objectives or {}) do
+        local text = type(o.text) == "string" and o.text:lower()
+        if text then
+            for n, rec in pairs(I.byName) do
+                if #n >= 5 and text:find(n, 1, true) then add(rec, "t") end
+            end
+        end
+    end
+    table.sort(out, function(a, b)
+        local x, y = tonumber(a.rec.row[1]), tonumber(b.rec.row[1])
+        if (a.rec.map == J.map) ~= (b.rec.map == J.map) then return a.rec.map == J.map end
+        if x and y then return x < y end
+        return tostring(a.rec.row[1]) < tostring(b.rec.row[1])
+    end)
+    return out
+end
+S.QuestSpots = questSpots   -- vdungeon-spots-test
+
+-- "On the map: 24 Overmaster Pyron · 15 Ribbly Screwspigot (gives it)" + the rows to light up on the map
+local function spotLine(spots)
+    if #spots == 0 then return nil end
+    local parts, set = {}, {}
+    for i, s in ipairs(spots) do
+        set[s.rec.row] = true
+        if i <= 4 then
+            parts[#parts + 1] = "|cffffd200" .. spotLabel(s.rec) .. "|r " .. s.rec.who[2]
+                .. (#s.roles > 0 and (" |cff8c8c9e(" .. table.concat(s.roles, ", ") .. ")|r") or "")
+        end
+    end
+    local text = "   On the map: " .. table.concat(parts, " · ") .. (#spots > 4 and (" +" .. (#spots - 4)) or "")
+    return text, set
+end
+S.SpotLine = spotLine
+
+-- Where to get a quest, precisely (the user, 2026-11-22: "if its a quest i can get now, tell me where to get it and be
+-- precise and informative, if there are pre req, tell me those ... if quests exist in the instance, that needs to be
+-- said"). The giver inside this dungeon: its map number. Outside: the place on the map (a city / Blackrock Mountain:
+-- C_Map's child map at that spot), the zone and the coordinates. What Atlas notes about the giver anywhere (a ghost,
+-- it wanders) is said too: Franclorn Forgewright is only seen while you're dead.
+local function atlasNote(name)
+    local want = plainName(name)
+    if want == "" then return nil end
+    for _, m in pairs(ns.Atlas or {}) do
+        for _, r in ipairs(m.rows or {}) do
+            if plainName(r[2]) == want then
+                local p = (r[2]:match("%((.-)%)") or ""):lower()
+                if p:find("ghost", 1, true) then
+                    return "a ghost: you only see them while you're dead (die, then walk back as a spirit and talk to them)"
+                elseif p:find("wanders", 1, true) then
+                    return "walks around: look along the halls nearby"
+                end
+            end
+        end
+    end
+end
+
+-- Every numbered spot on EVERY dungeon's maps (built once): a giver who stands in another dungeon (Lokhtos
+-- Darkbargainer in Blackrock Depths gives the Molten Core quests; Dire Maul's wings give each other's) is named with
+-- that dungeon and its number. Non-entrance maps first: inside wins over "at the door".
+local function dungeonOf(mapKey)
+    local z = ns.Atlas[mapKey] and ns.Atlas[mapKey].zone or ""
+    return (z:gsub(" %(Entrance%)$", ""):gsub("Map[A-C]$", ""):gsub("^Blackrock Mountain: ", ""))
+end
+local gidx
+local function globalIndex()
+    if gidx then return gidx end
+    gidx = { byNpc = {}, byName = {} }
+    local keys = {}
+    for k in pairs(ns.Atlas or {}) do keys[#keys + 1] = k end
+    table.sort(keys, function(a, b)
+        local ea, eb = a:find("Ent$") ~= nil, b:find("Ent$") ~= nil
+        if ea ~= eb then return eb end
+        return a < b
+    end)
+    for _, k in ipairs(keys) do
+        local anchor
+        for _, r in ipairs(ns.Atlas[k].rows or {}) do
+            if r[1] ~= "" then anchor = r elseif r[3] ~= "i" then anchor = nil end
+            local a = r[1] ~= "" and r or anchor
+            if a then
+                local rec = { row = a, map = k, who = r, dungeon = dungeonOf(k) }
+                if r.npc and not gidx.byNpc[r.npc] then gidx.byNpc[r.npc] = rec end
+                local n = plainName(r[2])
+                if #n >= 5 and not gidx.byName[n] then gidx.byName[n] = rec end
+            end
+        end
+    end
+    return gidx
+end
+-- "4", "Entrance 3", "Map B 7": a number on another dungeon's maps
+local function globalLabel(rec)
+    local z = ns.Atlas[rec.map].zone or ""
+    if rec.map:find("Ent$") then return "Entrance " .. rec.row[1] end
+    local ab = z:match("Map([A-C])$")
+    return ab and ("Map " .. ab .. " " .. rec.row[1]) or rec.row[1]
+end
+-- the numbered row a giver stands next to (s[8] map, s[9] number), as a spot record
+nearRec = function(s)
+    local m = s and s[8] and ns.Atlas[s[8]]
+    if not (m and s[9]) then return nil end
+    for _, r in ipairs(m.rows or {}) do
+        if r[1] == s[9] then return { row = r, map = s[8], who = r, dungeon = dungeonOf(s[8]) } end
+    end
+end
+local function sameDungeon(a, b)
+    local x, y = (a or ""):lower():gsub("[^%w]", ""), (b or ""):lower():gsub("[^%w]", "")
+    return x ~= "" and y ~= "" and (x:find(y, 1, true) ~= nil or y:find(x, 1, true) ~= nil)
+end
+
+-- Returns the text, whether it's inside THIS dungeon, and a short place for the list's right column.
+local whereText
+whereText = function(s)
+    if not s then return nil, false end
+    if s[1] == "i" then
+        -- the item, and where the mob that drops it is: the same answer as a giver's (this dungeon's number, another
+        -- dungeon's, at a door, inside but unmarked, or outdoors) (Sol)
+        local item = C_Item.GetItemNameByID(s[2]) or "an item"
+        if s[3] == "" then return "the item " .. item .. " (what drops it isn't known)", false end
+        local loc, inside, place = whereText({ "n", 0, s[3], s[4], s[5], s[6], s[7], s[8], s[9] })   -- s[8]/s[9]: Sol
+        return "the item " .. item .. ", which drops from " .. loc, inside, place
+    end
+    local name = s[3] ~= "" and s[3] or "?"
+    local rec = (s[1] == "n" and spotIndex().byNpc[s[2]]) or spotIndex().byName[plainName(name)]
+    local note = atlasNote(name)
+    -- on a dungeon's entrance map = outside the door, not inside (Sol)
+    local atDoor = rec and rec.map:find("Ent$") ~= nil
+    if rec and not atDoor then
+        return ("inside the dungeon: |cffffd200%s|r %s"):format(spotLabel(rec), rec.who[2])
+            .. (note and (" (" .. note .. ")") or ""), true
+    end
+    local door = atDoor and (" (outside the door, on the entrance map: |cffffd200" .. spotLabel(rec) .. "|r)") or ""
+    -- not on any legend, but the data knows the number it stands next to (s[8] Atlas map, s[9] number: the
+    -- Spectral Chalice is next to 18 Summoner's Tomb)
+    -- not on this dungeon's maps: another dungeon's (inside it, or at its door)
+    if not rec then
+        local G = globalIndex()
+        local g = (s[1] == "n" and G.byNpc[s[2]]) or G.byName[plainName(name)]
+        if g and not g.map:find("Ent$") then
+            return ("inside %s: |cffffd200%s|r %s"):format(g.dungeon, globalLabel(g), g.who[2])
+                .. (note and (" (" .. note .. ")") or ""), false, g.dungeon
+        elseif g then
+            door = (" (on %s's entrance map: |cffffd200%s|r)"):format(g.dungeon, globalLabel(g))
+        end
+    end
+    -- on no legend at all, but the data knows the number it stands next to (s[8] Atlas map, s[9] number: the
+    -- Spectral Chalice is next to 18 Summoner's Tomb)
+    local nr = not rec and door == "" and nearRec(s)
+    if nr then
+        local here = isCurMap(nr.map)
+        return ("inside %s: next to |cffffd200%s|r %s: %s"):format(here and "the dungeon" or nr.dungeon,
+            here and spotLabel(nr) or globalLabel(nr), nr.row[2], name) .. (note and (" (" .. note .. ")") or ""),
+            here, (not here) and nr.dungeon or nil
+    end
+    local mi = s[4] and s[4] > 0 and C_Map.GetMapInfo(s[4])
+    if not mi then
+        -- no spot outdoors, but the data knows which instance they stand in (no number: not on its map legend)
+        if s[7] and door == "" then
+            local here = J.cur and sameDungeon(J.cur.name, s[7])
+            return ("inside %s (not marked on the map): %s"):format(here and J.cur.name == s[7] and "the dungeon" or s[7], name)
+                .. (note and (" (" .. note .. ")") or ""), here and true or false, (not here) and s[7] or nil
+        end
+        return name .. (door ~= "" and door or " (no spot known: ask in game)") .. (note and (": " .. note) or ""), false
+    end
+    local place
+    local ok, sub = pcall(C_Map.GetMapInfoAtPosition, s[4], s[5], s[6])
+    -- only a place INSIDE that zone (in game 11-22 it returned the neighbour: "Yuka Screwspigot, Badlands, Burning Steppes")
+    if ok and sub and sub.name and sub.mapID ~= s[4] and sub.name ~= mi.name and sub.parentMapID == s[4] then place = sub.name end
+    return ("%s, %s%s (%.1f, %.1f)"):format(name, place and (place .. ", ") or "", mi.name, (s[5] or 0) * 100, (s[6] or 0) * 100)
+        .. door .. (note and (": " .. note) or ""), false, mi.name
+end
+S.WhereText = whereText   -- vdungeon-spots-test
+
+-- For a map number's tooltip (Canvas.lua): the NPCs listed under it ("Also here: Mistress Nagmara, Private Rocknot,
+-- Ribbly Screwspigot"), and the quests that point at it, yours first: { "Ribbly Screwspigot (in your log)", ... }
+function S:AlsoHere(row)
+    local m = J.map and ns.Atlas[J.map]
+    local names, under = {}, false
+    for _, r in ipairs(m and m.rows or {}) do
+        if r == row then under = true
+        elseif under then
+            if r[3] ~= "i" or r[1] ~= "" then break end
+            names[#names + 1] = r[2]
+        end
+    end
+    return #names > 0 and table.concat(names, ", ") or nil
+end
+
+
 -- A dungeon's quest IDs. A map with no list of its own ("Scarlet Monastery", the overview of its
 -- wings) gets the lists of every "Name: wing" entry, each quest once.
 local function dungeonQuests(name)
@@ -65,6 +343,62 @@ local function dungeonQuests(name)
     end
     table.sort(ids)
     return ids
+end
+
+function S:QuestsAt(row)
+    if not (J.cur and row) then return {} end
+    local race, class = select(3, UnitRace("player")), select(3, UnitClass("player"))
+    local out, seen = {}, {}
+    local function try(qid, title, state, objs)
+        if seen[qid] then return end
+        seen[qid] = true
+        for _, s in ipairs(questSpots(qid, objs)) do
+            if s.rec.row == row then
+                local why = #s.roles > 0 and table.concat(s.roles, ", ") or nil
+                out[#out + 1] = title .. " |cff8c8c9e(" .. (state and (why and (state .. ", " .. why) or state) or (why or "quest")) .. ")|r"
+                return
+            end
+        end
+    end
+    -- in your log first (any quest whose objective names a spot here), then the dungeon's quests you haven't taken
+    for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+        local info = C_QuestLog.GetInfo(i)
+        if info and info.questID and not info.isHeader and not info.isHidden then
+            try(info.questID, info.title or "?", "in your log", C_QuestLog.GetQuestObjectives(info.questID))
+        end
+    end
+    for _, qid in ipairs(dungeonQuests(J.cur.name)) do
+        local q = ns.QI and ns.QI[qid]
+        local crumbGone = q and q[13] and (done(q[13]) or inLog(q[13]))   -- as in the list (Sol)
+        if q and not crumbGone and not done(qid) and not inLog(qid) and hasBit(q[4], race) and hasBit(q[5], class) then try(qid, q[1], nil) end
+    end
+    return out
+end
+
+-- "Mining 230" -> your skill when it's lower than that (0 = you don't have the profession), else nil.
+-- GetProfessions lists primaries, fishing, cooking, first aid (Forever: First Aid 284 seen 11-22).
+local function profShort(need)
+    local name, n = (need or ""):match("^(.-)%s+(%d+)$")
+    n = tonumber(n)
+    if not (name and n) or type(GetProfessions) ~= "function" then return nil end
+    local have = 0
+    local profs = { GetProfessions() }   -- empty slots are nil (no archaeology): no ipairs
+    for i = 1, 6 do
+        local p = profs[i]
+        if p then
+            local pn, _, rank = GetProfessionInfo(p)
+            if pn == name and type(rank) == "number" then have = rank end
+        end
+    end
+    return have < n and have or nil
+end
+
+-- an item in your bags (C_Item.GetItemCount; nil API = assume yes, never hide a quest on a missing API)
+local function carrying(itemID)
+    local f = C_Item and C_Item.GetItemCount
+    if type(f) ~= "function" then return true end
+    local ok, n = pcall(f, itemID)
+    return not ok or (type(n) == "number" and n > 0)
 end
 
 local function questEntries(out)
@@ -113,13 +447,26 @@ local function questEntries(out)
     for _, info in ipairs(mine) do
         listed[info.questID] = true
         local r, g, b = questColor(info.level)
+        local objs = C_QuestLog.GetQuestObjectives(info.questID) or {}
+        local spotText, spotSet = spotLine(questSpots(info.questID, objs))
         out[#out + 1] = { text = ("[%d] %s"):format(info.level or 0, info.title or "?"), r = r, g = g, b = b,
-            right = C_QuestLog.IsComplete(info.questID) and "|cff33ff33Done|r" or "", quest = info.questID }
-        for _, o in ipairs(C_QuestLog.GetQuestObjectives(info.questID) or {}) do
+            right = C_QuestLog.IsComplete(info.questID) and "|cff33ff33Done|r" or "", quest = info.questID, spots = spotSet }
+        for _, o in ipairs(objs) do
             if o.text and o.text ~= "" then
                 out[#out + 1] = { text = "   " .. o.text, r = o.finished and 0.4 or 0.75,
                     g = o.finished and 0.8 or 0.75, b = o.finished and 0.4 or 0.8 }
             end
+        end
+        -- who takes it back, and where (the user, 11-22: Lost Thunderbrew Recipe in the log, nothing said Vivian
+        -- Lagrave in Kargath takes it)
+        local qi = ns.QI and ns.QI[info.questID]
+        local turnIn = qi and qi[14] and whereText(qi[14])
+        if turnIn then
+            out[#out + 1] = { text = "   |cff55ff55Turn it in:|r " .. turnIn, r = 0.9, g = 0.9, b = 0.9, wrap = true }
+        end
+        if spotText then
+            out[#out + 1] = { text = spotText, r = 0.6, g = 0.85, b = 1, spots = spotSet, wrap = true,
+                tip = "The numbers on the map for this quest. Hover: they light up." }
         end
         rewardRow(info.questID)
     end
@@ -133,16 +480,32 @@ local function questEntries(out)
     local env = ns.Chain and ns.Chain.GameEnv()
     for _, qid in ipairs(ids) do
         local q = ns.QI and ns.QI[qid]
-        if q and not listed[qid] and not done(qid) and not inLog(qid) and hasBit(q[4], race) and hasBit(q[5], class) then
+        -- a breadcrumb (q[13] = the quest it leads to) is gone from its giver once you have or did that quest (the
+        -- user, 11-22, at Apothecary Zinge: "he doesnt have a quest for brd": Vivian Lagrave only leads to Lost
+        -- Thunderbrew Recipe, already in the log)
+        local crumbGone = q and q[13] and (done(q[13]) or inLog(q[13]))
+        if q and not crumbGone and not listed[qid] and not done(qid) and not inLog(qid) and hasBit(q[4], race) and hasBit(q[5], class) then
             local e = { qid = qid, q = q }
             -- the whole way in (Chain.lua): every quest before this one, with where you stand on each
             e.steps = ns.Chain and ns.Chain:Steps(qid, env) or {}
             e.left = ns.Chain and ns.Chain:Left(e.steps) or 0
             e.start = ns.Chain and ns.Chain:Start(e.steps)
             if e.left > 0 then
-                later[#later + 1] = e
+                -- its first step can be taken right now: that's a quest you can get now (the user, 11-22: "tell me
+                -- how i missed them": A Taste of Flame sat dim at level 58 behind "10 quests first")
+                e.startNow = e.start and e.start.state == "ready" and e.start.q and true or nil
+                if e.startNow then ready[#ready + 1] = e else later[#later + 1] = e end
             elseif (q[3] or 0) > level then
                 e.needLevel = q[3]
+                later[#later + 1] = e
+            elseif q[15] and not carrying(q[15]) then
+                -- offered only while you carry the item it's named after (the user, 11-22, at Mathredis Firestar:
+                -- "did not have a quest for me at all": the three Libram quests)
+                e.needItem = q[15]
+                later[#later + 1] = e
+            elseif q[11] and profShort(q[11]) then
+                -- the profession isn't high enough (the user, 11-22: The Spectral Chalice needs Mining 230, Vede has 167)
+                e.needSkill, e.haveSkill = q[11], profShort(q[11])
                 later[#later + 1] = e
             else
                 ready[#ready + 1] = e
@@ -157,20 +520,70 @@ local function questEntries(out)
         local s = q[6]
         local r, g, b = questColor(q[2])
         if dim then r, g, b = r * 0.55, g * 0.55, b * 0.55 end
+        local where, inside, place = whereText(s)
         local right
-        if e.left > 0 then
+        if e.startNow then
+            right = ("|cff55ff55start now|r |cff8c8c9e(%d first)|r"):format(e.left)
+        elseif e.left > 0 then
             right = ("|cff8c8c9e%d quest%s first|r"):format(e.left, e.left == 1 and "" or "s")
         elseif e.needLevel then
             right = "|cff8c8c9eat " .. e.needLevel .. "|r"
-        elseif s and s[1] == "i" then
+        elseif e.needSkill then
+            right = "|cff8c8c9e" .. e.needSkill .. "|r"
+        elseif e.needItem then
+            right = "|cff8c8c9eneeds the item|r"
+        elseif inside then
             right = "|cffffd200inside|r"
         else
-            local mi = s and s[4] and s[4] > 0 and C_Map.GetMapInfo(s[4])
-            right = mi and ("|cffffd200" .. mi.name .. "|r") or ""
+            right = place and ("|cffffd200" .. place .. "|r") or ""
         end
         local open = e.left > 0 and S.open[e.qid]
+        local spotText, spotSet = spotLine(questSpots(e.qid))
         out[#out + 1] = { text = ("%s[%d] %s"):format(e.left > 0 and (open and "|cff4fd8ff- |r" or "|cff4fd8ff+ |r") or "", q[2] or 0, q[1]),
-            r = r, g = g, b = b, right = right, missing = e, wrap = true }
+            r = r, g = g, b = b, right = right, missing = e, wrap = true, spots = spotSet }
+        -- where to get it, or what comes first: said in the list, not only in a tooltip
+        local k = dim and 0.7 or 1
+        local function say(text)
+            out[#out + 1] = { text = "   " .. text, r = 0.9 * k, g = 0.9 * k, b = 0.9 * k, wrap = true, full = "   " .. text }
+        end
+        if e.left > 0 then
+            local st = e.start
+            if st and st.state == "log" then
+                say("|cffff8080First:|r finish " .. (st.q and st.q[1] or "the quest before it") .. " (in your quest log)")
+            elseif st and st.q then
+                local w = whereText(st.q[6])
+                say((e.startNow and "|cff55ff55Start with:|r " or "|cffff8080First:|r ") .. st.q[1]
+                    .. (w and (", get it " .. (w:find("^inside") and w or ("from " .. w))) or ""))
+            else
+                say("|cffff8080First:|r a quest you can't take yet (a level or another chain first). Click: the whole chain")
+            end
+        elseif where then
+            local lead = e.needLevel and ("|cffff8080At level " .. e.needLevel .. ":|r ")
+                or e.needSkill and ("|cffff8080At " .. e.needSkill .. ":|r ")
+                or e.needItem and ("|cffff8080Only while you carry a " .. q[1] .. ":|r ") or "|cff55ff55Get it|r "
+            say(lead .. (where:find("^inside") and where or ("from " .. where)))
+        else
+            -- no giver in the data at all (quests new on WoW Forever: Alcaz Prison, Krol'dok, ...)
+            say("|cff8c8c9eWhere it starts isn't in our data yet (probably new on WoW Forever): ask in game.|r")
+        end
+        -- what it takes besides the trip: a profession, and the items to bring (The Spectral Chalice: Mining 230;
+        -- Star Ruby, Gold Bar, Truesilver Bar)
+        if q[13] then
+            local t = ns.QI and ns.QI[q[13]]
+            local tw = t and t[6] and whereText(t[6])
+            say("|cff8c8c9eOptional: it only sends you to|r " .. (t and t[1] or "the next quest")
+                .. (tw and ("|cff8c8c9e. You can go straight there:|r " .. tw) or ""))
+        end
+        if q[11] then
+            local have = e.needSkill and e.haveSkill
+            say("|cffff8080Needs|r " .. q[11] .. (have and (have == 0 and " (you don't have it)" or (" (you have " .. have .. ")")) or ""))
+        end
+        if q[12] then say("Bring: " .. q[12]) end
+        if spotText then
+            local k = dim and 0.6 or 1
+            out[#out + 1] = { text = spotText, r = 0.6 * k, g = 0.85 * k, b = 1 * k, spots = spotSet, wrap = true,
+                tip = "The numbers on the map for this quest. Hover: they light up." }
+        end
         rewardRow(e.qid, dim)
         if open then
             -- the way in, oldest first: where you stand on each step, and where to start now
@@ -213,6 +626,8 @@ local function questEntries(out)
         out[#out + 1] = { text = "No quests known for " .. (d and d.name or "this dungeon") .. " yet.", r = 0.5, g = 0.5, b = 0.55, wrap = true }
     end
 end
+
+S._QuestEntries = questEntries   -- vdungeon-spots-test
 
 -- Route to where a missing quest starts: VoidGPS when installed (crosses continents),
 -- else a map pin on that zone.
@@ -560,6 +975,7 @@ local function rowEnter(r)
     local e = r.e
     if not e then return end
     if e.row and ns.Canvas then ns.Canvas:Glow(e.row) end
+    if e.spots and ns.Canvas then ns.Canvas:Glow({ set = e.spots }) end   -- a quest: its numbers on the map
     if e.tip then   -- a plain explanation (the boss card box)
         GameTooltip:SetOwner(r, "ANCHOR_LEFT")
         GameTooltip:SetText(e.text or "", 1, 1, 1)

@@ -45,6 +45,14 @@ local function fits(q, env) return q == nil or (hasBit(q[4], env.race) and hasBi
 local function readyNow(q, env)
     if (q[3] or 0) > env.level then return false end
     for _, p in ipairs(q[7] or {}) do if not env.done(p) then return false end end
+    -- and its own "one of these first" (the user, 11-22: A Taste of Flame part 1 comes in two versions; #4022
+    -- needs Kalaran's 10-quest chain, #4023 nothing, and the long one was picked: "10 quests first")
+    local any = q[10]
+    if any and #any > 0 then
+        local met = false
+        for _, p in ipairs(any) do if env.done(p) then met = true; break end end
+        if not met then return false end
+    end
     return true
 end
 local function pickAny(list, env)

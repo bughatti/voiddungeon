@@ -177,6 +177,14 @@ local function marker(i)
         local r = self.row
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText((r[1] ~= "" and (r[1] .. ") ") or "") .. r[2], 1, 1, 1)
+        -- who else is at this number, and the quests that point here (Side.lua; the user, 2026-11-22)
+        local also = ns.Side and ns.Side.AlsoHere and ns.Side:AlsoHere(r)
+        if also then GameTooltip:AddLine("Also here: " .. also, 0.85, 0.85, 0.85, true) end
+        local qs = ns.Side and ns.Side.QuestsAt and ns.Side:QuestsAt(r) or {}
+        for i, line in ipairs(qs) do
+            if i > 5 then GameTooltip:AddLine(("+%d more quests"):format(#qs - 5), 0.6, 0.6, 0.6) break end
+            GameTooltip:AddLine("Quest: " .. line, 1, 0.82, 0, true)
+        end
         local loot, shown = J:Loot(r.npc), 0
         for _, it in ipairs(loot) do
             local name, q = J:Item(it[1])
@@ -300,10 +308,11 @@ function C:Refresh()
     if ns.Route then ns.Route:Draw(canvas, mapTex, size, key) end
 end
 
--- Light up a row's markers (Side.lua's hover).
+-- Light up a row's markers (Side.lua's hover), or several: { set = { [row] = true } } (a quest's spots).
 function C:Glow(row)
+    local set = type(row) == "table" and row.set
     for _, mk in ipairs(markers) do
-        if mk:IsShown() then mk.glow:SetShown(mk.row == row or mk.row == J.sel) end
+        if mk:IsShown() then mk.glow:SetShown((set and set[mk.row]) or mk.row == row or mk.row == J.sel) end
     end
 end
 
