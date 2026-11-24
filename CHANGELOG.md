@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## 0.8.2 — 2026-11-24
+
+- **Layers work again after the game's November 20 update (WoW Forever).** The update gave every NPC a number of its own, so the layer read off the NPCs around you kept jumping. The layer engine every Void addon shares (from VoidLayer 0.6.0) now names your layer itself and lets the game keep the name right: a world refresh or a hop gives you a new name, Void players who turn out to be on one layer take one name, and a layer hop turns down an invite from a helper who's on your layer already.
+
 ## 0.8.1 — 2026-11-23
 
 - **Better pack guesses in dungeons with look-alike packs (WoW Forever).** In Sunken Temple the same troll packs stand on every side of the ring, and the marking board could guess the mobs of the wrong side ("Probably Nightmare Wyrmkin" on a troll). When several spots fit your last fight, it now names a mob only when all of them agree. Measured on 400 recorded pulls: 84% of its guesses right instead of 80%, with fewer guesses where it can't be sure.
