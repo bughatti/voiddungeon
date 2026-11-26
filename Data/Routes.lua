@@ -54,4 +54,15 @@ ns.Routes = {
     { map = "CL_TheSunkenTemple", label = "Shade of Eranikus", x = 0, y = 0, note = "In the Chamber of the Dreamer, just past Morphaz and Hazzas. The last boss.", npc = 5709 },
     },
   },
+  ["Blackmaw Hold"] = { mapID = 2974, steps = {
+    { map = "VD_BlackmawHold", label = "Impaan the Imprisoner", x = 0, y = 0, note = "Through Blackmaw Grove and up into Defiled Peak, where the Legashi demons start. In the Grove, Blackmaw Thralls and Headhunters run away at low health (stop them before they bring more) and Berserkers enrage. He fights with a Legashi Slayer and Subjugator. Order from one run (2026-11-25).", npc = 247206 },
+    { map = "VD_BlackmawHold", label = "Moontouched Wanderer", x = 0, y = 0, note = "Back down into Bonesnout's Thicket: Legashi Ritualists, Slayers and Subjugators, and a few Depraved Owlbeasts (they enrage). It's not one of the game's boss fights; ours died in the Thicket just before Bonesnout.", npc = 269104 },
+    { map = "VD_BlackmawHold", label = "Bonesnout the Unbroken", x = 0, y = 0, note = "At the back of Bonesnout's Thicket. Drops the Tusks of the Unbroken (Claws That Rend, Tusks that Gore).", npc = 247198 },
+    { map = "VD_BlackmawHold", label = "Withermaw", x = 0, y = 0, note = "In the Festering Grotto, past Depraved Owlbeasts and Bloated Grizzlies. Flesh Maggots join the fight. Drops the Claws of the Great Bear (the same quest).", npc = 247195 },
+    { map = "VD_BlackmawHold", label = "Unbound Spirit", x = 0, y = 0, note = "Past the Grotto (the game gives these rooms no name), through more Blackmaw and Legashi packs; Sabella No-Eyes stands on the way. A long fight (ours: 2 min): kill the Profane Totem and pick up the Ethereal Spider, Wolf and Bear spirits. Elder Bramblesnap ends it.", npc = 247231 },
+    { map = "VD_BlackmawHold", label = "Elder Shaman Bloodmane", x = 0, y = 0, note = "Past Blackmaw Shamans, Druids, Spearfishers and Devotees. He summons Feral Spirits. Drops the Blackmaw Ritual Totem (Blackmaw Magic). For Blackmaw Pouches: ours dropped from Impaan, Sabella No-Eyes, Bloodmane and two packs.", npc = 247209 },
+    { map = "VD_BlackmawHold", label = "Blackmaw Behemoth", x = 0, y = 0, note = "He fights with Clawbert and a pack of Blackmaw and Legashi: clear what you can around him first. Ours took almost 2 min.", npc = 247207 },
+    { map = "VD_BlackmawHold", label = "Varrox Bleakhoof", x = 0, y = 0, note = "Past two more Blackmaw and Legashi packs. The last boss.", npc = 247234 },
+    },
+  },
 }

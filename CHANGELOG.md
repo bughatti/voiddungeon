@@ -1,5 +1,15 @@
 # VoidDungeon Changelog
 
+## 0.9.0 — 2026-11-25
+
+- **Maps for WoW Forever's new dungeons (Blackmaw Hold, Alcaz Prison, The Shaper's Terrace).** No map of them exists anywhere, so the dungeon map now shows the game's own top-down picture of the dungeon (the one your minimap is made from), straight from the game's files.
+- **The area you're in lights up** on those maps (Blackmaw Hold, The Shaper's Terrace): the game names your area, and the dungeon's ground says which part of the map that is.
+- **Blackmaw Hold's route, drawn:** where each boss stands, worked out from our runs, with a line kept to the walkable floor. A best guess: Shift-click the map to pin a boss (or the entrance) where it really is, and the line follows.
+- **A route box by your minimap** in Blackmaw Hold: the whole route on a small map that stays on screen, the area you're in lit, "Next: ..." on top. Drag it anywhere; right-click hides it until your next dungeon.
+- **"Next: ..." on your minimap** in any dungeon with a route.
+- **A finished leg goes away:** once a boss is dead, the line to it is no longer drawn (its number stays, grey).
+- **The marking board knows more mobs** from Void players' fights, Blackmaw Hold and Alcaz Prison among them.
+
 ## 0.8.2 — 2026-11-24
 
 - **Layers work again after the game's November 20 update (WoW Forever).** The update gave every NPC a number of its own, so the layer read off the NPCs around you kept jumping. The layer engine every Void addon shares (from VoidLayer 0.6.0) now names your layer itself and lets the game keep the name right: a world refresh or a hop gives you a new name, Void players who turn out to be on one layer take one name, and a layer hop turns down an invite from a helper who's on your layer already.

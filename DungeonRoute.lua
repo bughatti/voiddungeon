@@ -187,7 +187,8 @@ end
 
 -- the colour key in the map's top-left corner (the user, 2026-11-19: "why is there a blue and red lines" / "yes add
 -- the key"): a short line in each colour + what it means
-local KEY = { { "todo", "main route" }, { "opt", "optional" }, { "next", "next" }, { "done", "done" } }
+-- (no "done": a done leg's line goes away, 2026-11-25)
+local KEY = { { "todo", "main route" }, { "opt", "optional" }, { "next", "next" } }
 local keyBox
 local function colourKey()
     if keyBox then return keyBox end
@@ -229,7 +230,10 @@ function R:Draw(canvas, mapTex, size, key)
     if keyBox then keyBox:Hide() end
     local route = R.For(J.cur)
     local m = ns.Atlas[key]
-    if not (m and m.img and mapTex:IsShown()) then return end
+    -- a game map (Canvas.lua: the game's own minimap, no Atlas picture): stops + lines come from your pins
+    -- and the walkable ground (C.GameView); a step not pinned yet is left off
+    local view = not (m and m.img) and ns.Canvas and ns.Canvas.GameView and ns.Canvas.GameView(route, key)
+    if not ((m and m.img and mapTex:IsShown()) or view) then return end
     local scale = size / 512
     local li, bi = 0, 0
     local function seg(x1, y1, x2, y2, th, r, g, b, a)
@@ -250,11 +254,15 @@ function R:Draw(canvas, mapTex, size, key)
     local way = ns.Way and J.cur and ns.Way.dungeon == J.cur.name and ns.Way or nil
     if not route and not way then return end
     route = route or { steps = {} }
-    for i, s in ipairs(route.steps) do
-        if s.map == key then
+    for i, s0 in ipairs(route.steps) do
+        local s = s0
+        if view then s = view[i] end
+        if s and s.map == key then
             local state = R.State(route, i)
             local st = STYLE[(s.opt and state == "todo") and "opt" or state]
-            local ln = s.line
+            -- a leg you've done goes away (the user, 2026-11-25: "when a boss is killed, the line to that boss can go
+            -- away"); its number stays, grey, so the order still reads
+            local ln = state ~= "done" and s.line
             if ln then
                 for p = 1, #ln - 3, 2 do
                     li = li + 1

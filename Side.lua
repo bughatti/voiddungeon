@@ -1300,3 +1300,14 @@ boot:RegisterEvent("PLAYER_LOGIN")
 boot:SetScript("OnEvent", function()
     if VoidMap and VoidMap.OnReady and VoidMap.SetSideOwner then VoidMap:OnReady(build) end
 end)
+
+-- Read-only hooks for the all-in-one VoidHub window (2026-11-24): the hub's Dungeons page lists the same entries
+-- (BUILD per tab, for J.cur) and its rows hover and click the same way (rowEnter / rowClick read r.e and r.title).
+-- Nothing here changes this panel.
+S.Hub = {
+    TABS = TABS,
+    Build = function(t, out) local f = BUILD[t]; if f then f(out) end end,
+    Enter = rowEnter, Click = rowClick,
+    Leave = function() GameTooltip:Hide(); if ns.Canvas then ns.Canvas:Glow(nil) end end,
+}
+J.SideHub = S.Hub   -- reachable from outside (VoidDungeon is global, ns.Side is not)
