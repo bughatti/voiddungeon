@@ -115,7 +115,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 
 - Soft reserve needs the leader to have VoidDungeon; the rest of the group can use whispers or softres.it. When nobody who reserved an item is in the group, it's a free roll.
 
-- Maps cover the Classic dungeons and most of WoW Forever's new ones. The few without a map yet (Alcaz Prison, Blackmaw Hold, Shaper's Terrace) show their bosses and loot until they get one.
+- Maps cover the Classic dungeons and all of WoW Forever's new ones. The three nobody ever drew (Alcaz Prison, Blackmaw Hold, Shaper's Terrace) show the game's own minimap picture; their bosses have no numbered spots on it yet, except Blackmaw Hold's best guess.
 - Drop chances are Classic's. WoW Forever's new items have no known chance yet.
 
 ---
@@ -130,6 +130,7 @@ Open your map inside a dungeon and VoidMap shows that dungeon instead of the wor
 ## Credits
 
 - **Dungeon maps** by the Atlas Team: Dan Gilbert, Lothaer, Arith Hsu and the Atlas Team ([Atlas](https://github.com/arithmandar/Atlas)), GPL-2.0-or-later.
+- **Maps of Alcaz Prison, Blackmaw Hold and The Shaper's Terrace:** the game's own minimap pictures, shown from the game's files (nothing of them ships with the addon); their areas and walkable ground from the same game files.
 - **Drop chances, dungeon quests and entrances** from VoidDB. Which quests belong to which dungeon also comes from Blizzard's own WoW Forever quest data. **VoidDB**, the game data the Void addons ship, is built from Blizzard's game data, finds shared by Void players, and open data: NorgannonDB by Maro, QuestieDB, pfQuest by Shagu, DungeonJournal by Exehn and CMaNGOS classic-db (GPL-3.0; pfQuest MIT). Full credits and licences: NOTICE.txt in the addon folder. Thank you to all of them.
 - **Boss notes** written by us from WoW Forever's dungeon guides and our own runs; a note only one guide gives says so.
 - **Where each pack stands** and which mobs pull together, also from the CMaNGOS classic database (GPL-3.0)
