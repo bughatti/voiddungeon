@@ -1,5 +1,9 @@
 # VoidDungeon Changelog
 
+## 0.9.1 — 2026-11-26
+
+- **Fixed: Void players losing each other every hour (WoW Forever).** On the hour, every player's addon checked the new hour's shared channel at once. With 200+ players the channel's owner couldn't answer them all in time, so most addons gave up on it and moved to backup channels: within minutes everyone was spread over 4 channels, sharing only with a slice of the others, and the players box dropped (230 to 65 on the Alliance side). Now a few players check right away and the rest later, spread out, so everyone stays together. A channel taken over by someone else is still left within minutes. Also: the players box shows the right count a minute after the hour instead of five, and a channel's owner is no longer missed in channels of 300+ players.
+
 ## 0.9.0 — 2026-11-25
 
 - **Maps for WoW Forever's new dungeons (Blackmaw Hold, Alcaz Prison, The Shaper's Terrace).** No map of them exists anywhere, so the dungeon map now shows the game's own top-down picture of the dungeon (the one your minimap is made from), straight from the game's files.
